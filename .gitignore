@@ -1,0 +1,5 @@
+*.orig
+.svn
+.settings
+.mtj.tmp
+bin

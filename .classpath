@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="res"/>
+	<classpathentry kind="con" path="org.elipse.mtj.JavaMEContainer/Sony Ericsson SDK 2.5.0.6 for the Java(TM) ME Platform(Emulator)/SonyEricsson_K750_Emu"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
