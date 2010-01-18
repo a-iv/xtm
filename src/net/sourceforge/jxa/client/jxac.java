@@ -1,3 +1,4 @@
+package net.sourceforge.jxa.client;
 /*
  * Copyright 2008 Yuan-Chu Tai
  * http://sourceforge.net/projects/jxa
@@ -15,6 +16,7 @@
  */
 
 import net.sourceforge.jxa.*;
+
 import java.io.*;import java.util.*;
 import javax.microedition.midlet.*;
 import javax.microedition.lcdui.*;

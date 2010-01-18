@@ -1,3 +1,4 @@
+package net.sourceforge.jxa.client;
 /*
  * Copyright 2006 Dustin Hass, Sven Jost, Swen Kummer
  * http://sourceforge.net/projects/jxa
