@@ -722,19 +722,19 @@ public class SampleMIDlet extends MIDlet implements CommandListener {
 		 * else if (display.getCurrent() == ycheterror) { if (c == exit) {
 		 * destroyApp(true); } else if (c == ok) { display.setCurrent(ychet2); }
 		 * }
-		 *//*
-			 * else if (display.getCurrent() == ychet2) { if (c == exit) {
-			 * destroyApp(true); } else if ((c == ok) &&
-			 * !name2.getString().equals("") && !work2.getString().equals("") )
-			 * { String s = name2.getString(); byte[] data = s.getBytes();
-			 * setRecordText(1, data); String s2 = work2.getString(); byte[]
-			 * data2 = s2.getBytes(); setRecordText(2, data2); String s3 =
-			 * password2.getString(); byte[] data3 = s3.getBytes();
-			 * setRecordText(3, data3); display.setCurrent(connection); } else
-			 * if ((c == ok) && (name2.getString().equals("") ||
-			 * work2.getString().equals(""))) {
-			 * ychet2.append("Заполните учетную запись полностью!"); } }
-			 */else if (display.getCurrent() == formTask) {
+		 */
+		/*
+		 * else if (display.getCurrent() == ychet2) { if (c == exit) {
+		 * destroyApp(true); } else if ((c == ok) &&
+		 * !name2.getString().equals("") && !work2.getString().equals("") ) {
+		 * String s = name2.getString(); byte[] data = s.getBytes();
+		 * setRecordText(1, data); String s2 = work2.getString(); byte[] data2 =
+		 * s2.getBytes(); setRecordText(2, data2); String s3 =
+		 * password2.getString(); byte[] data3 = s3.getBytes(); setRecordText(3,
+		 * data3); display.setCurrent(connection); } else if ((c == ok) &&
+		 * (name2.getString().equals("") || work2.getString().equals(""))) {
+		 * ychet2.append("Заполните учетную запись полностью!"); } }
+		 */else if (display.getCurrent() == formTask) {
 			if (c == cancel) {
 				display.setCurrent(chat);
 			} else if (c == ok && !topic.equals("")) {
