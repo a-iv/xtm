@@ -25,7 +25,7 @@ package net.sourceforge.jxa;
  */
 public interface XmppListener {
 
-	//public void onDebug(final String msg);
+	// public void onDebug(final String msg);
 	/**
 	 * This event is sent when a parser or connection error occurs.
 	 */
@@ -39,36 +39,46 @@ public interface XmppListener {
 	/**
 	 * This event occurs when the login/authentication process fails.
 	 * 
-	 * @param message some error information
+	 * @param message
+	 *            some error information
 	 */
 	public void onAuthFailed(final String message);
 
 	/**
 	 * This event is sent when a message arrives.
 	 * 
-	 * @param from the jid of the sender
-	 * @param body the message text
+	 * @param from
+	 *            the jid of the sender
+	 * @param body
+	 *            the message text
 	 */
 	public void onMessageEvent(final String from, final String body);
 
 	/**
 	 * This event occurs when someone has removed you from his roster (o rly?)
 	 * 
-	 * @param jid the jid of the remover
+	 * @param jid
+	 *            the jid of the remover
 	 */
-	//public void onContactRemoveEvent(final String jid);
+	// public void onContactRemoveEvent(final String jid);
 
 	/**
 	 * This event occurs for each contact in roster when the roster is queried.
 	 * 
-	 * @param jid the jid of the contact
-	 * @param name the nickname of the contact
-	 * @param group the group in which the contact is saved
-	 * @param subscription the subscription status of the contact
+	 * @param jid
+	 *            the jid of the contact
+	 * @param name
+	 *            the nickname of the contact
+	 * @param group
+	 *            the group in which the contact is saved
+	 * @param subscription
+	 *            the subscription status of the contact
 	 */
-	public void onContactEvent(final String jid, final String name, final String group, final String subscription);
+	public void onContactEvent(final String jid, final String name,
+			final String group, final String subscription);
 
 	public void onContactOverEvent();
+
 	/**
 	 * <p>
 	 * This event occurs when a presence message comes from jabber server. This
@@ -87,16 +97,20 @@ public interface XmppListener {
 	 * An offline user will send no status message at all.
 	 * </p>
 	 * 
-	 * @param jid the JID of the contact that changed his status
-	 * @param status the display status
+	 * @param jid
+	 *            the JID of the contact that changed his status
+	 * @param status
+	 *            the display status
 	 */
-	public void onStatusEvent(final String jid, final String show, final String status);
+	public void onStatusEvent(final String jid, final String show,
+			final String status);
 
 	/**
 	 * This event is sent when a subscription request arrives. This means
 	 * someone has allowed you to see his status.
 	 * 
-	 * @param jid the jid of the one who wants to subscribe to you
+	 * @param jid
+	 *            the jid of the one who wants to subscribe to you
 	 */
 	public void onSubscribeEvent(final String jid);
 
@@ -104,7 +118,8 @@ public interface XmppListener {
 	 * This event is sent when a subscription remove event arrives. This means
 	 * someone has taken away your right to see his status.
 	 * 
-	 * @param jid the jid of the one who removes your subscription
+	 * @param jid
+	 *            the jid of the one who removes your subscription
 	 */
 	public void onUnsubscribeEvent(final String jid);
 

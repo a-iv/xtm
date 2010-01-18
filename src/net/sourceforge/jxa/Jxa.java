@@ -30,8 +30,8 @@ import java.util.*;
 
 public class Jxa extends Thread {
 
-  final static boolean DEBUG = true;
-        
+	final static boolean DEBUG = true;
+
 	private final String host, port, username, password, myjid, server;
 	private final boolean use_ssl;
 	private String resource;
@@ -45,35 +45,39 @@ public class Jxa extends Thread {
 	private Vector listeners = new Vector();
 
 	/**
-	 * If you create this object all variables will be saved and the
-	 * method {@link #run()} is started to log in on jabber server and
-	 * listen to parse incomming xml stanzas. Use
-	 * {@link #addListener(XmppListener xl)} to listen to events of this object.
+	 * If you create this object all variables will be saved and the method
+	 * {@link #run()} is started to log in on jabber server and listen to parse
+	 * incomming xml stanzas. Use {@link #addListener(XmppListener xl)} to
+	 * listen to events of this object.
 	 * 
-	 * @param host the hostname/ip of the jabber server
-	 * @param port the port number of the jabber server
-	 * @param username the username of the jabber account
-	 * @param password the passwort of the jabber account
-	 * @param resource a unique identifier of the used resource, for e.g. "mobile"
-	 * @param priority the priority of the jabber session, defines on which
- 	 * resource the messages arrive
+	 * @param host
+	 *            the hostname/ip of the jabber server
+	 * @param port
+	 *            the port number of the jabber server
+	 * @param username
+	 *            the username of the jabber account
+	 * @param password
+	 *            the passwort of the jabber account
+	 * @param resource
+	 *            a unique identifier of the used resource, for e.g. "mobile"
+	 * @param priority
+	 *            the priority of the jabber session, defines on which resource
+	 *            the messages arrive
 	 */
-/*	public Jxa(final String host, final String port, final String username, final String password, final String resource, final int priority) {
-		this.host = host;
-		this.port = port;
-		this.username = username;
-		this.password = password;
-		this.resource = resource;
-		this.priority = priority;
-		this.myjid = username + "@" + host;
-		this.early_jabber = true;
-		this.server = host;
-		this.start();	
-	}*/
+	/*
+	 * public Jxa(final String host, final String port, final String username,
+	 * final String password, final String resource, final int priority) {
+	 * this.host = host; this.port = port; this.username = username;
+	 * this.password = password; this.resource = resource; this.priority =
+	 * priority; this.myjid = username + "@" + host; this.early_jabber = true;
+	 * this.server = host; this.start(); }
+	 */
 	// jid must in the form "username@host"
-	// to login Google Talk, set port to 5223 (NOT 5222 in their offical guide)	public Jxa(final String jid, final String password, final String resource, final int priority, final String server, final String port, final boolean use_ssl) {
+	// to login Google Talk, set port to 5223 (NOT 5222 in their offical guide)	public Jxa(final String jid, final String password, final String resource,
+			final int priority, final String server, final String port,
+			final boolean use_ssl) {
 		int i = jid.indexOf('@');
-		this.host = jid.substring(i+1);
+		this.host = jid.substring(i + 1);
 		this.port = port;
 		this.username = jid.substring(0, i);
 		this.password = password;
@@ -85,24 +89,27 @@ public class Jxa extends Thread {
 		else
 			this.server = server;
 		this.use_ssl = use_ssl;
-		//this.start();
+		// this.start();
 	}
 
 	/**
-	 * The <code>run</code> method is called when {@link Jxa} object is
-	 * created. It sets up the reader and writer, calls {@link #login()}
-	 * methode and listens on the reader to parse incomming xml stanzas.
+	 * The <code>run</code> method is called when {@link Jxa} object is created.
+	 * It sets up the reader and writer, calls {@link #login()} methode and
+	 * listens on the reader to parse incomming xml stanzas.
 	 */
-	public void run() {		
+	public void run() {
 		try {
 			if (!use_ssl) {
-				final StreamConnection connection = (StreamConnection) Connector.open("socket://" + this.host + ":" + this.port);
+				final StreamConnection connection = (StreamConnection) Connector
+						.open("socket://" + this.host + ":" + this.port);
 				this.reader = new XmlReader(connection.openInputStream());
 				this.writer = new XmlWriter(connection.openOutputStream());
 			} else {
-				final SecureConnection sc = (SecureConnection)Connector.open("ssl://" + this.server + ":" + this.port, Connector.READ_WRITE);
-				//sc.setSocketOption(SocketConnection.DELAY, 1);
-				//sc.setSocketOption(SocketConnection.LINGER, 0);
+				final SecureConnection sc = (SecureConnection) Connector.open(
+						"ssl://" + this.server + ":" + this.port,
+						Connector.READ_WRITE);
+				// sc.setSocketOption(SocketConnection.DELAY, 1);
+				// sc.setSocketOption(SocketConnection.LINGER, 0);
 				is = sc.openInputStream();
 				os = sc.openOutputStream();
 				this.reader = new XmlReader(is);
@@ -113,47 +120,51 @@ public class Jxa extends Thread {
 			this.connectionFailed(e.toString());
 			return;
 		}
-		
+
 		java.lang.System.out.println("connected");
-		/*for (Enumeration enu = listeners.elements(); enu.hasMoreElements();) {
-      XmppListener xl = (XmppListener) enu.nextElement();
-	    xl.onDebug("connected");
-    }*/	
-			
+		/*
+		 * for (Enumeration enu = listeners.elements(); enu.hasMoreElements();)
+		 * { XmppListener xl = (XmppListener) enu.nextElement();
+		 * xl.onDebug("connected"); }
+		 */
+
 		// connected
 		try {
 			this.login();
 			this.parse();
-			//java.lang.System.out.println("done");
+			// java.lang.System.out.println("done");
 		} catch (final Exception e) {
-			//e.printStackTrace();
-			/*for (Enumeration enu = listeners.elements(); enu.hasMoreElements();) {
-        XmppListener xl = (XmppListener) enu.nextElement();
-        xl.onDebug(e.getMessage());
-      }*/
-      /*try {
-          this.writer.close();
-          this.reader.close();
-      } catch (final IOException io) {
-          io.printStackTrace();
-      }*/			// hier entsteht der connection failed bug (Network Down)
+			// e.printStackTrace();
+			/*
+			 * for (Enumeration enu = listeners.elements();
+			 * enu.hasMoreElements();) { XmppListener xl = (XmppListener)
+			 * enu.nextElement(); xl.onDebug(e.getMessage()); }
+			 */
+			/*
+			 * try { this.writer.close(); this.reader.close(); } catch (final
+			 * IOException io) { io.printStackTrace(); }
+			 */
+			// hier entsteht der connection failed bug (Network Down)
 			this.connectionFailed(e.toString());
 		}
 	}
 
 	/**
 	 * Add a {@link XmppListener} to listen for events.
-	 *
-	 * @param xl a XmppListener object
+	 * 
+	 * @param xl
+	 *            a XmppListener object
 	 */
 	public void addListener(final XmppListener xl) {
-		if(!listeners.contains(xl)) listeners.addElement(xl);
+		if (!listeners.contains(xl))
+			listeners.addElement(xl);
 	}
 
 	/**
 	 * Remove a {@link XmppListener} from this class.
-	 *
-	 * @param xl a XmppListener object
+	 * 
+	 * @param xl
+	 *            a XmppListener object
 	 */
 	public void removeListener(final XmppListener xl) {
 		listeners.removeElement(xl);
@@ -163,8 +174,9 @@ public class Jxa extends Thread {
 	 * Opens the connection with a stream-tag, queries authentication type and
 	 * sends authentication data, which is username, password and resource.
 	 * 
-	 * @throws java.io.IOException is thrown if {@link XmlReader} or {@link XmlWriter}
-	 *	throw an IOException.
+	 * @throws java.io.IOException
+	 *             is thrown if {@link XmlReader} or {@link XmlWriter} throw an
+	 *             IOException.
 	 */
 	public void login() throws IOException {
 		if (!use_ssl) {
@@ -172,7 +184,8 @@ public class Jxa extends Thread {
 			this.writer.startTag("stream:stream");
 			this.writer.attribute("to", this.host);
 			this.writer.attribute("xmlns", "jabber:client");
-			this.writer.attribute("xmlns:stream", "http://etherx.jabber.org/streams");
+			this.writer.attribute("xmlns:stream",
+					"http://etherx.jabber.org/streams");
 			this.writer.flush();
 			// log in
 			this.writer.startTag("iq");
@@ -195,65 +208,78 @@ public class Jxa extends Thread {
 			this.writer.endTag(); // iq
 			this.writer.flush();
 		} else {
-			String msg = "<stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' to='" + this.host + "' version='1.0'>";
+			String msg = "<stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' to='"
+					+ this.host + "' version='1.0'>";
 			os.write(msg.getBytes());
 			os.flush();
 			do {
 				reader.next();
-			} while ((reader.getType() != XmlReader.END_TAG) || (!reader.getName().equals("stream:features")));
+			} while ((reader.getType() != XmlReader.END_TAG)
+					|| (!reader.getName().equals("stream:features")));
 
 			java.lang.System.out.println("SASL phase1");
-			/*for (Enumeration enu = listeners.elements(); enu.hasMoreElements();) {
-	      XmppListener xl = (XmppListener) enu.nextElement();
-		    xl.onDebug("SASL phase 1");
-    	}*/	
-    	
-    	//int ghost = is.available();
-    	//is.skip(ghost);
-    	
+			/*
+			 * for (Enumeration enu = listeners.elements();
+			 * enu.hasMoreElements();) { XmppListener xl = (XmppListener)
+			 * enu.nextElement(); xl.onDebug("SASL phase 1"); }
+			 */
+
+			// int ghost = is.available();
+			// is.skip(ghost);
+
 			msg = "<auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl' mechanism='PLAIN'>";
-			byte[] auth_msg = (username + "@" + host + "\0" + username + "\0" + password).getBytes();
+			byte[] auth_msg = (username + "@" + host + "\0" + username + "\0" + password)
+					.getBytes();
 			msg = msg + Base64.encode(auth_msg) + "</auth>";
 			os.write(msg.getBytes());
-			os.flush();			
+			os.flush();
 			reader.next();
 			if (reader.getName().equals("success")) {
-				while (true) {			
-						if ((reader.getType() == XmlReader.END_TAG) && reader.getName().equals("success")) break;
-						reader.next();
+				while (true) {
+					if ((reader.getType() == XmlReader.END_TAG)
+							&& reader.getName().equals("success"))
+						break;
+					reader.next();
 				}
 			} else {
 				for (Enumeration e = listeners.elements(); e.hasMoreElements();) {
 					XmppListener xl = (XmppListener) e.nextElement();
-					xl.onAuthFailed(reader.getName() + ", failed authentication");
+					xl.onAuthFailed(reader.getName()
+							+ ", failed authentication");
 				}
 				return;
 			}
 			java.lang.System.out.println("SASL phase2");
-			/*for (Enumeration enu = listeners.elements(); enu.hasMoreElements();) {
-		    XmppListener xl = (XmppListener) enu.nextElement();
-			  xl.onDebug("SASL phase 2");
-	    }*/		
-			msg = "<stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' to='" + this.host + "' version='1.0'>";
+			/*
+			 * for (Enumeration enu = listeners.elements();
+			 * enu.hasMoreElements();) { XmppListener xl = (XmppListener)
+			 * enu.nextElement(); xl.onDebug("SASL phase 2"); }
+			 */
+			msg = "<stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' to='"
+					+ this.host + "' version='1.0'>";
 			os.write(msg.getBytes());
 			os.flush();
 			reader.next();
-			while (true) {			
-					if ((reader.getType() == XmlReader.END_TAG)  && reader.getName().equals("stream:features")) break;
-					reader.next();
+			while (true) {
+				if ((reader.getType() == XmlReader.END_TAG)
+						&& reader.getName().equals("stream:features"))
+					break;
+				reader.next();
 			}
 			java.lang.System.out.println("SASL done");
-			/*for (Enumeration enu = listeners.elements(); enu.hasMoreElements();) {
-		    XmppListener xl = (XmppListener) enu.nextElement();
-			  xl.onDebug("SASL done");
-			}	*/	
-			if (resource == null) 
+			/*
+			 * for (Enumeration enu = listeners.elements();
+			 * enu.hasMoreElements();) { XmppListener xl = (XmppListener)
+			 * enu.nextElement(); xl.onDebug("SASL done"); }
+			 */
+			if (resource == null)
 				msg = "<iq type='set' id='res_binding'><bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'/></iq>";
-			else 
-				msg = "<iq type='set' id='res_binding'><bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'><resource>" + resource + "</resource></bind></iq>";
+			else
+				msg = "<iq type='set' id='res_binding'><bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'><resource>"
+						+ resource + "</resource></bind></iq>";
 			os.write(msg.getBytes());
 			os.flush();
-		}		
+		}
 	}
 
 	/**
@@ -272,8 +298,10 @@ public class Jxa extends Thread {
 	/**
 	 * Sends a message text to a known jid.
 	 * 
-	 * @param to the JID of the recipient
-	 * @param msg the message itself
+	 * @param to
+	 *            the JID of the recipient
+	 * @param msg
+	 *            the message itself
 	 */
 	public void sendMessage(final String to, final String msg) {
 		try {
@@ -294,10 +322,11 @@ public class Jxa extends Thread {
 	/**
 	 * Sends a presence stanza to a jid. This method can do various task but
 	 * it's private, please use setStatus to set your status or explicit
-         * subscription methods subscribe, unsubscribe, subscribed and
-	 * unsubscribed to change subscriptions.
+	 * subscription methods subscribe, unsubscribe, subscribed and unsubscribed
+	 * to change subscriptions.
 	 */
-	private void sendPresence(final String to, final String type, final String show, final String status, final int priority) {
+	private void sendPresence(final String to, final String type,
+			final String show, final String status, final int priority) {
 		try {
 			this.writer.startTag("presence");
 			if (type != null) {
@@ -332,10 +361,13 @@ public class Jxa extends Thread {
 	/**
 	 * Sets your Jabber Status.
 	 * 
-	 * @param show is one of the following: <code>null</code>, chat, away,
-	 *        dnd, xa, invisible
-	 * @param status an extended text describing the actual status
-	 * @param priority the priority number (5 should be default)
+	 * @param show
+	 *            is one of the following: <code>null</code>, chat, away, dnd,
+	 *            xa, invisible
+	 * @param status
+	 *            an extended text describing the actual status
+	 * @param priority
+	 *            the priority number (5 should be default)
 	 */
 	public void setStatus(String show, String status, final int priority) {
 		if (show.equals("")) {
@@ -354,7 +386,8 @@ public class Jxa extends Thread {
 	/**
 	 * Requesting a subscription.
 	 * 
-	 * @param to the jid you want to subscribe
+	 * @param to
+	 *            the jid you want to subscribe
 	 */
 	public void subscribe(final String to) {
 		this.sendPresence(to, "subscribe", null, null, 0);
@@ -363,7 +396,8 @@ public class Jxa extends Thread {
 	/**
 	 * Remove a subscription.
 	 * 
-	 * @param to the jid you want to remove your subscription
+	 * @param to
+	 *            the jid you want to remove your subscription
 	 */
 	public void unsubscribe(final String to) {
 		this.sendPresence(to, "unsubscribe", null, null, 0);
@@ -372,7 +406,8 @@ public class Jxa extends Thread {
 	/**
 	 * Approve a subscription request.
 	 * 
-	 * @param to the jid that sent you a subscription request
+	 * @param to
+	 *            the jid that sent you a subscription request
 	 */
 	public void subscribed(final String to) {
 		this.sendPresence(to, "subscribed", null, null, 0);
@@ -381,22 +416,28 @@ public class Jxa extends Thread {
 	/**
 	 * Refuse/Reject a subscription request.
 	 * 
-	 * @param to the jid that sent you a subscription request
+	 * @param to
+	 *            the jid that sent you a subscription request
 	 */
 	public void unsubscribed(final String to) {
 		this.sendPresence(to, "unsubscribed", null, null, 0);
 	}
 
 	/**
-	 * Save a contact to roster. This means, a message is send to jabber
-	 * server (which hosts your roster) to update the roster.
+	 * Save a contact to roster. This means, a message is send to jabber server
+	 * (which hosts your roster) to update the roster.
 	 * 
-	 * @param jid the jid of the contact
-	 * @param name the nickname of the contact
-	 * @param group the group of the contact
-	 * @param subscription the subscription of the contact
+	 * @param jid
+	 *            the jid of the contact
+	 * @param name
+	 *            the nickname of the contact
+	 * @param group
+	 *            the group of the contact
+	 * @param subscription
+	 *            the subscription of the contact
 	 */
-	public void saveContact(final String jid, final String name, final Enumeration group, final String subscription) {
+	public void saveContact(final String jid, final String name,
+			final Enumeration group, final String subscription) {
 		try {
 			this.writer.startTag("iq");
 			this.writer.attribute("type", "set");
@@ -430,8 +471,9 @@ public class Jxa extends Thread {
 	/**
 	 * Sends a roster query.
 	 * 
-	 * @throws java.io.IOException is thrown if {@link XmlReader} or {@link XmlWriter}
-	 *	throw an IOException.
+	 * @throws java.io.IOException
+	 *             is thrown if {@link XmlReader} or {@link XmlWriter} throw an
+	 *             IOException.
 	 */
 	public void getRoster() throws IOException {
 		this.writer.startTag("iq");
@@ -446,14 +488,16 @@ public class Jxa extends Thread {
 
 	/**
 	 * The main parse methode is parsing all types of XML stanzas
-	 * <code>message</code>, <code>presence</code> and <code>iq</code>.
-	 * Although ignores any other type of xml.
+	 * <code>message</code>, <code>presence</code> and <code>iq</code>. Although
+	 * ignores any other type of xml.
 	 * 
-	 * @throws java.io.IOException is thrown if {@link XmlReader} or {@link XmlWriter}
-	 *	throw an IOException.
+	 * @throws java.io.IOException
+	 *             is thrown if {@link XmlReader} or {@link XmlWriter} throw an
+	 *             IOException.
 	 */
 	private void parse() throws IOException {
-		if (DEBUG) java.lang.System.out.println("*debug* parsing");
+		if (DEBUG)
+			java.lang.System.out.println("*debug* parsing");
 		if (!use_ssl)
 			this.reader.next(); // start tag
 		while (this.reader.next() == XmlReader.START_TAG) {
@@ -468,7 +512,7 @@ public class Jxa extends Thread {
 				this.parseIgnore();
 			}
 		}
-		//java.lang.System.out.println("leave parse() " + reader.getName());
+		// java.lang.System.out.println("leave parse() " + reader.getName());
 		this.reader.close();
 	}
 
@@ -476,11 +520,13 @@ public class Jxa extends Thread {
 	 * This method parses all info/query stanzas, including authentication
 	 * mechanism and roster. It also answers version queries.
 	 * 
-	 * @throws java.io.IOException is thrown if {@link XmlReader} or {@link XmlWriter}
-	 *	throw an IOException.
+	 * @throws java.io.IOException
+	 *             is thrown if {@link XmlReader} or {@link XmlWriter} throw an
+	 *             IOException.
 	 */
 	private void parseIq() throws IOException {
-		if (DEBUG) java.lang.System.out.println("*debug* paeseIq");
+		if (DEBUG)
+			java.lang.System.out.println("*debug* paeseIq");
 		String type = this.reader.getAttribute("type");
 		final String id = this.reader.getAttribute("id");
 		final String from = this.reader.getAttribute("from");
@@ -489,7 +535,8 @@ public class Jxa extends Thread {
 				// String name = reader.getName();
 				if (this.reader.getName().equals("error")) {
 					final String code = this.reader.getAttribute("code");
-					for (Enumeration e = listeners.elements(); e.hasMoreElements();) {
+					for (Enumeration e = listeners.elements(); e
+							.hasMoreElements();) {
 						XmppListener xl = (XmppListener) e.nextElement();
 						xl.onAuthFailed(code + ": " + this.parseText());
 					}
@@ -497,72 +544,88 @@ public class Jxa extends Thread {
 					this.parseText();
 				}
 			}
-		} else if (type.equals("result") && (id != null) && id.equals("res_binding")) {
+		} else if (type.equals("result") && (id != null)
+				&& id.equals("res_binding")) {
 			// authorized
-			while (true) {				
-				reader.next();				
+			while (true) {
+				reader.next();
 				String tagname = reader.getName();
 				if (tagname != null) {
-					if ((reader.getType() == XmlReader.START_TAG) && tagname.equals("jid")) {
+					if ((reader.getType() == XmlReader.START_TAG)
+							&& tagname.equals("jid")) {
 						reader.next();
 						String rsp_jid = reader.getText();
 						int i = rsp_jid.indexOf('/');
-						this.resource = rsp_jid.substring(i+1);
-						//java.lang.System.out.println(this.resource);
-					} else if (tagname.equals("iq")) 
+						this.resource = rsp_jid.substring(i + 1);
+						// java.lang.System.out.println(this.resource);
+					} else if (tagname.equals("iq"))
 						break;
 				}
 			}
-      for (Enumeration e = listeners.elements(); e.hasMoreElements();) {
+			for (Enumeration e = listeners.elements(); e.hasMoreElements();) {
 				XmppListener xl = (XmppListener) e.nextElement();
 				xl.onAuth(this.resource);
 			}
 			this.sendPresence(null, null, null, null, this.priority);
 		} else {
-			//java.lang.System.out.println("contacts list");
+			// java.lang.System.out.println("contacts list");
 			while (this.reader.next() == XmlReader.START_TAG) {
 				if (this.reader.getName().equals("query")) {
-					if (this.reader.getAttribute("xmlns").equals("jabber:iq:roster")) {
+					if (this.reader.getAttribute("xmlns").equals(
+							"jabber:iq:roster")) {
 						while (this.reader.next() == XmlReader.START_TAG) {
 							if (this.reader.getName().equals("item")) {
 								type = this.reader.getAttribute("type");
-                String jid = reader.getAttribute("jid");
-                String name = reader.getAttribute("name");
-                String subscription = reader.getAttribute("subscription");
-                //newjid = (jid.indexOf('/') == -1) ? jid : jid.substring(0, jid.indexOf('/'));
+								String jid = reader.getAttribute("jid");
+								String name = reader.getAttribute("name");
+								String subscription = reader
+										.getAttribute("subscription");
+								// newjid = (jid.indexOf('/') == -1) ? jid :
+								// jid.substring(0, jid.indexOf('/'));
 								boolean check = true;
-								//yctai
-                /*for (Enumeration e = listeners.elements(); e.hasMoreElements();) {
-                	XmppListener xl = (XmppListener) e.nextElement();
-                  xl.onContactRemoveEvent(newjid);
-                }*/
+								// yctai
+								/*
+								 * for (Enumeration e = listeners.elements();
+								 * e.hasMoreElements();) { XmppListener xl =
+								 * (XmppListener) e.nextElement();
+								 * xl.onContactRemoveEvent(newjid); }
+								 */
 								while (this.reader.next() == XmlReader.START_TAG) {
 									if (this.reader.getName().equals("group")) {
-                    for (Enumeration e = listeners.elements(); e.hasMoreElements();) {
-                      XmppListener xl = (XmppListener) e.nextElement();
-                      xl.onContactEvent(jid, name, this.parseText(), subscription);
-                    }
+										for (Enumeration e = listeners
+												.elements(); e
+												.hasMoreElements();) {
+											XmppListener xl = (XmppListener) e
+													.nextElement();
+											xl.onContactEvent(jid, name, this
+													.parseText(), subscription);
+										}
 										check = false;
 									} else {
 										this.parseIgnore();
 									}
 								}
-								//if (check && !subscription.equals("remove"))
+								// if (check && !subscription.equals("remove"))
 								if (check) {
-                  for (Enumeration e = listeners.elements(); e.hasMoreElements();) {
-                    XmppListener xl = (XmppListener) e.nextElement();
-                    xl.onContactEvent(jid, name, "", subscription);
-                  }
+									for (Enumeration e = listeners.elements(); e
+											.hasMoreElements();) {
+										XmppListener xl = (XmppListener) e
+												.nextElement();
+										xl.onContactEvent(jid, name, "",
+												subscription);
+									}
 								}
 							} else {
 								this.parseIgnore();
 							}
 						}
-						for (Enumeration e = listeners.elements(); e.hasMoreElements();) {
-		          XmppListener xl = (XmppListener) e.nextElement();
-		          xl.onContactOverEvent();
-            }
-					} else if (this.reader.getAttribute("xmlns").equals("jabber:iq:version")) {
+						for (Enumeration e = listeners.elements(); e
+								.hasMoreElements();) {
+							XmppListener xl = (XmppListener) e.nextElement();
+							xl.onContactOverEvent();
+						}
+					} else if (this.reader.getAttribute("xmlns").equals(
+							"jabber:iq:version")) {
 						while (this.reader.next() == XmlReader.START_TAG) {
 							this.parseIgnore();
 						}
@@ -600,11 +663,13 @@ public class Jxa extends Thread {
 	/**
 	 * This method parses all presence stanzas, including subscription requests.
 	 * 
-	 * @throws java.io.IOException is thrown if {@link XmlReader} or {@link XmlWriter}
-	 *	throw an IOException.
+	 * @throws java.io.IOException
+	 *             is thrown if {@link XmlReader} or {@link XmlWriter} throw an
+	 *             IOException.
 	 */
 	private void parsePresence() throws IOException {
-		final String from = this.reader.getAttribute("from"), type = this.reader.getAttribute("type");
+		final String from = this.reader.getAttribute("from"), type = this.reader
+				.getAttribute("type");
 		String status = "", show = "";
 		// int priority=-1;
 		while (this.reader.next() == XmlReader.START_TAG) {
@@ -620,31 +685,36 @@ public class Jxa extends Thread {
 			}
 		}
 
-		if (DEBUG) java.lang.System.out.println("*debug* from,type,status,show:" + from + "," + type + "," + status + "," + show);
+		if (DEBUG)
+			java.lang.System.out.println("*debug* from,type,status,show:"
+					+ from + "," + type + "," + status + "," + show);
 
-		//if ((type != null) && (type.equals("unavailable") || type.equals("unsubscribed") || type.equals("error"))) {
+		// if ((type != null) && (type.equals("unavailable") ||
+		// type.equals("unsubscribed") || type.equals("error"))) {
 		if (type == null) {
 			for (Enumeration e = listeners.elements(); e.hasMoreElements();) {
-		      XmppListener xl = (XmppListener) e.nextElement();		      xl.onStatusEvent(from, show, status);
-		   }
+				XmppListener xl = (XmppListener) e.nextElement();
+				xl.onStatusEvent(from, show, status);
+			}
 		} else {
 			if (type.equals("unsubscribed") || type.equals("error")) {
 				for (Enumeration e = listeners.elements(); e.hasMoreElements();) {
-		      XmppListener xl = (XmppListener) e.nextElement();
-		      xl.onUnsubscribeEvent(from);
+					XmppListener xl = (XmppListener) e.nextElement();
+					xl.onUnsubscribeEvent(from);
 				}
 			} else if (type.equals("subscribe")) {
-		    for (Enumeration e = listeners.elements(); e.hasMoreElements();) {
-		      XmppListener xl = (XmppListener) e.nextElement();
-		      xl.onSubscribeEvent(from);
-		    }
+				for (Enumeration e = listeners.elements(); e.hasMoreElements();) {
+					XmppListener xl = (XmppListener) e.nextElement();
+					xl.onSubscribeEvent(from);
+				}
 			} else if (type.equals("unavailable")) {
-				//final String jid = (from.indexOf('/') == -1) ? from : from.substring(0, from.indexOf('/'));
-		    for (Enumeration e = listeners.elements(); e.hasMoreElements();) {
-		      XmppListener xl = (XmppListener) e.nextElement();
-		      //xl.onStatusEvent(jid, show, status);
-		      xl.onStatusEvent(from, "na", status);
-		    }
+				// final String jid = (from.indexOf('/') == -1) ? from :
+				// from.substring(0, from.indexOf('/'));
+				for (Enumeration e = listeners.elements(); e.hasMoreElements();) {
+					XmppListener xl = (XmppListener) e.nextElement();
+					// xl.onStatusEvent(jid, show, status);
+					xl.onStatusEvent(from, "na", status);
+				}
 			}
 		}
 	}
@@ -652,11 +722,13 @@ public class Jxa extends Thread {
 	/**
 	 * This method parses all incoming messages.
 	 * 
-	 * @throws java.io.IOException is thrown if {@link XmlReader} or {@link XmlWriter}
-	 *	throw an IOException.
+	 * @throws java.io.IOException
+	 *             is thrown if {@link XmlReader} or {@link XmlWriter} throw an
+	 *             IOException.
 	 */
 	private void parseMessage() throws IOException {
-		final String from = this.reader.getAttribute("from"), type = this.reader.getAttribute("type");
+		final String from = this.reader.getAttribute("from"), type = this.reader
+				.getAttribute("type");
 		String body = null, subject = null;
 		while (this.reader.next() == XmlReader.START_TAG) {
 			final String tmp = this.reader.getName();
@@ -669,17 +741,19 @@ public class Jxa extends Thread {
 			}
 		}
 		// (from, subject, body);
-                for (Enumeration e = listeners.elements(); e.hasMoreElements();) {
-                        XmppListener xl = (XmppListener) e.nextElement();
-                        xl.onMessageEvent((from.indexOf('/') == -1) ? from : from.substring(0, from.indexOf('/')), body);
-                }
+		for (Enumeration e = listeners.elements(); e.hasMoreElements();) {
+			XmppListener xl = (XmppListener) e.nextElement();
+			xl.onMessageEvent((from.indexOf('/') == -1) ? from : from
+					.substring(0, from.indexOf('/')), body);
+		}
 	}
 
 	/**
 	 * This method parses all text inside of xml start and end tags.
 	 * 
-	 * @throws java.io.IOException is thrown if {@link XmlReader} or {@link XmlWriter}
-	 *	throw an IOException.
+	 * @throws java.io.IOException
+	 *             is thrown if {@link XmlReader} or {@link XmlWriter} throw an
+	 *             IOException.
 	 */
 	private String parseText() throws IOException {
 		final String endTagName = this.reader.getName();
@@ -698,8 +772,9 @@ public class Jxa extends Thread {
 	 * This method doesn't parse tags it only let the reader go through unknown
 	 * tags.
 	 * 
-	 * @throws java.io.IOException is thrown if {@link XmlReader} or {@link XmlWriter}
-	 *	throw an IOException.
+	 * @throws java.io.IOException
+	 *             is thrown if {@link XmlReader} or {@link XmlWriter} throw an
+	 *             IOException.
 	 */
 	private void parseIgnore() throws IOException {
 		int x;
@@ -711,26 +786,27 @@ public class Jxa extends Thread {
 	}
 
 	/**
-	 * This method is used to be called on a parser or a connection error.
-         * It tries to close the XML-Reader and XML-Writer one last time.
-         *
+	 * This method is used to be called on a parser or a connection error. It
+	 * tries to close the XML-Reader and XML-Writer one last time.
+	 * 
 	 */
 	private void connectionFailed() {
-    this.writer.close();
-    this.reader.close();
+		this.writer.close();
+		this.reader.close();
 
 		for (Enumeration e = listeners.elements(); e.hasMoreElements();) {
-      XmppListener xl = (XmppListener) e.nextElement();
-      xl.onConnFailed("");
+			XmppListener xl = (XmppListener) e.nextElement();
+			xl.onConnFailed("");
 		}
 	}
+
 	private void connectionFailed(final String msg) {
-    this.writer.close();
-    this.reader.close();
+		this.writer.close();
+		this.reader.close();
 
 		for (Enumeration e = listeners.elements(); e.hasMoreElements();) {
-      XmppListener xl = (XmppListener) e.nextElement();
-      xl.onConnFailed(msg);
+			XmppListener xl = (XmppListener) e.nextElement();
+			xl.onConnFailed(msg);
 		}
 	}
 
