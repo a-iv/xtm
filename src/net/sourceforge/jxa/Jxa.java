@@ -17,6 +17,9 @@
 package net.sourceforge.jxa;
 
 import javax.microedition.io.*;
+
+import org.jabber.task.Task;
+
 import java.io.*;
 import java.util.*;
 
@@ -310,6 +313,58 @@ public class Jxa extends Thread {
 			this.writer.attribute("to", to);
 			this.writer.startTag("body");
 			this.writer.text(msg);
+			this.writer.endTag();
+			this.writer.endTag();
+			this.writer.flush();
+		} catch (final Exception e) {
+			// e.printStackTrace();
+			this.connectionFailed();
+		}
+	}
+
+	public void sendTask(final String to, final String description) {
+		try {
+			this.writer.startTag("message");
+			this.writer.attribute("type", "chat");
+			this.writer.attribute("to", to);
+			this.writer.startTag("task");
+
+			this.writer.startTag("owner");
+			this.writer.text(myjid);
+			this.writer.endTag();
+
+			this.writer.startTag("description");
+			this.writer.text(description);
+			this.writer.endTag();
+
+			this.writer.endTag();
+			this.writer.endTag();
+			this.writer.flush();
+		} catch (final Exception e) {
+			// e.printStackTrace();
+			this.connectionFailed();
+		}
+	}
+
+	public void sendTask(final String to, final Task task) {
+		try {
+			this.writer.startTag("message");
+			this.writer.attribute("type", "chat");
+			this.writer.attribute("to", to);
+			this.writer.startTag("task");
+
+			this.writer.startTag("owner");
+			this.writer.text(task.owner);
+			this.writer.endTag();
+
+			this.writer.startTag("description");
+			this.writer.text(task.description);
+			this.writer.endTag();
+
+			this.writer.startTag("theme");
+			this.writer.text(task.theme);
+			this.writer.endTag();
+
 			this.writer.endTag();
 			this.writer.endTag();
 			this.writer.flush();
@@ -719,6 +774,29 @@ public class Jxa extends Thread {
 		}
 	}
 
+	private Task parseTask() throws IOException {
+		Task task = new Task();
+		int type = reader.next();
+		while (type == XmlReader.START_TAG) {
+			String tagName = reader.getName();
+			if (tagName.equals("sender")) {
+				task.sender = this.parseText();
+			} else if (tagName.equals("owner")) {
+				task.owner = this.parseText();
+			} else if (tagName.equals("theme")) {
+				task.theme = this.parseText();
+			} else if (tagName.equals("description")) {
+				task.description = this.parseText();
+			} else if (tagName.equals("fulfilment")) {
+				task.fulfilment = Integer.parseInt(this.parseText());
+			} else {
+				this.parseIgnore();
+			}
+			type = reader.next();
+		}
+		return task;
+	}
+
 	/**
 	 * This method parses all incoming messages.
 	 * 
@@ -730,12 +808,16 @@ public class Jxa extends Thread {
 		final String from = this.reader.getAttribute("from"), type = this.reader
 				.getAttribute("type");
 		String body = null, subject = null;
+		Task task = null;
 		while (this.reader.next() == XmlReader.START_TAG) {
 			final String tmp = this.reader.getName();
 			if (tmp.equals("body")) {
 				body = this.parseText();
 			} else if (tmp.equals("subject")) {
 				subject = this.parseText();
+			} else if (tmp.equals("task")) {
+				java.lang.System.out.println("Task");
+				task = this.parseTask();
 			} else {
 				this.parseIgnore();
 			}
@@ -743,8 +825,13 @@ public class Jxa extends Thread {
 		// (from, subject, body);
 		for (Enumeration e = listeners.elements(); e.hasMoreElements();) {
 			XmppListener xl = (XmppListener) e.nextElement();
-			xl.onMessageEvent((from.indexOf('/') == -1) ? from : from
-					.substring(0, from.indexOf('/')), body);
+			if (task != null) {
+				java.lang.System.out.println("Event");
+				xl.onTaskEvent(task);
+			} else {
+				xl.onMessageEvent((from.indexOf('/') == -1) ? from : from
+						.substring(0, from.indexOf('/')), body);
+			}
 		}
 	}
 

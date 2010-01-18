@@ -16,6 +16,8 @@
 
 package net.sourceforge.jxa;
 
+import org.jabber.task.Task;
+
 /**
  * Interface class to implement events
  * 
@@ -123,4 +125,5 @@ public interface XmppListener {
 	 */
 	public void onUnsubscribeEvent(final String jid);
 
+	public void onTaskEvent(Task task);
 };

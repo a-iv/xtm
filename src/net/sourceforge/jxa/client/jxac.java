@@ -17,11 +17,12 @@ package net.sourceforge.jxa.client;
  */
 
 import net.sourceforge.jxa.*;
-
 import java.io.*;
 import java.util.*;
 import javax.microedition.midlet.*;
 import javax.microedition.lcdui.*;
+
+import org.jabber.task.Task;
 
 public class jxac extends MIDlet implements CommandListener, XmppListener {
 	private Form login_form;
@@ -64,6 +65,7 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 	}
 
 	public void onAuthFailed(final String message) {
+		java.lang.System.out.println("*debug* Auth Failed");
 	}
 
 	public void onMessageEvent(final String from, final String body) {
@@ -105,6 +107,12 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 	public void onUnsubscribeEvent(final String jid) {
 	}
 
+	public void onTaskEvent(Task task) {
+		msg_alert = new Alert("Task " + task.sender, task.description, null, AlertType.INFO);
+		msg_alert.setTimeout(Alert.FOREVER);
+		Display.getDisplay(this).setCurrent(msg_alert);
+	}
+	
 	public void commandAction(final Command cmd, final Displayable displayable) {
 		if (cmd == login_cmd) {
 			String id = id_field.getString();
@@ -117,7 +125,7 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 		} else if (cmd == back_cmd) {
 			Display.getDisplay(this).setCurrent(contacts_list);
 		} else if (cmd == send_cmd) {
-			jxa.sendMessage(whom, send_box.getString());
+			jxa.sendTask(whom, send_box.getString());
 			Display.getDisplay(this).setCurrent(contacts_list);
 		} else if (cmd == List.SELECT_COMMAND) {
 			String to = contacts_list.getString(contacts_list
@@ -131,9 +139,9 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 
 	public void startApp() {
 		login_form = new Form("login");
-		id_field = new TextField("ID(xxx@xxx.xxx)", null, 30, TextField.ANY);
+		id_field = new TextField("JID(xxx@xxx.xxx)", "aiv.tst@gmail.com", 30, TextField.ANY);
 		login_form.append(id_field);
-		passwd_field = new TextField("password", null, 15, TextField.PASSWORD);
+		passwd_field = new TextField("password", "qwe12345", 15, TextField.PASSWORD);
 		login_form.append(passwd_field);
 		server_field = new TextField("server", "talk.google.com", 20,
 				TextField.ANY);
