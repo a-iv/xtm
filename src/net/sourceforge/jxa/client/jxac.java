@@ -32,12 +32,17 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 	private TextField id_field;
 	private TextField passwd_field;
 	private TextField server_field;
+	private TextField subscribe_field;
 	private Command exit_cmd;
 	private Command login_cmd;
 	private Command send_cmd;
 	private Command back_cmd;
+	private Command contact_cmd;
+	private Command subscribe_cmd;
+	private Command unsubscribe_cmd;
 	private Image offline_img;
 	private Image online_img;
+	private Form subscribe_form;
 	private String whom;
 	private Jxa jxa;
 	private Roster roster = new Roster();
@@ -53,6 +58,7 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 	}
 
 	public void onConnFailed(String msg) {
+		System.out.println("Connection failed");
 	}
 
 	public void onAuth(final String resource) {
@@ -102,9 +108,12 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 	}
 
 	public void onSubscribeEvent(final String jid) {
+		System.out.println("Subscribe from " + jid);
+		jxa.subscribe(jid);
 	}
 
 	public void onUnsubscribeEvent(final String jid) {
+		System.out.println("Unsubscribe from " + jid);
 	}
 
 	public void onTaskEvent(Task task) {
@@ -126,6 +135,14 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 			Display.getDisplay(this).setCurrent(contacts_list);
 		} else if (cmd == send_cmd) {
 			jxa.sendTask(whom, send_box.getString());
+			Display.getDisplay(this).setCurrent(contacts_list);
+		} else if (cmd == contact_cmd) {
+			Display.getDisplay(this).setCurrent(subscribe_form);
+		} else if (cmd == subscribe_cmd) {
+			jxa.subscribe(subscribe_field.getString());
+			Display.getDisplay(this).setCurrent(contacts_list);
+		} else if (cmd == unsubscribe_cmd) {
+			jxa.unsubscribe(subscribe_field.getString());
 			Display.getDisplay(this).setCurrent(contacts_list);
 		} else if (cmd == List.SELECT_COMMAND) {
 			String to = contacts_list.getString(contacts_list
@@ -154,6 +171,8 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 
 		contacts_list = new List("connecting...", List.IMPLICIT);
 		contacts_list.addCommand(exit_cmd);
+		contact_cmd = new Command("Contact", Command.OK, 1);
+		contacts_list.addCommand(contact_cmd);
 		contacts_list.setCommandListener(this);
 
 		send_box = new TextBox(null, null, 50, TextField.ANY);
@@ -162,6 +181,15 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 		send_box.addCommand(back_cmd);
 		send_box.addCommand(send_cmd);
 		send_box.setCommandListener(this);
+		
+		subscribe_form = new Form("subscribe");
+		subscribe_field = new TextField("JID(xxx@xxx.xxx)", "aiv.tst@gmail.com", 30, TextField.ANY);
+		subscribe_form.append(subscribe_field);
+		subscribe_cmd = new Command("Subscribe", Command.OK, 1);
+		unsubscribe_cmd = new Command("Unsubscribe", Command.OK, 1);
+		subscribe_form.addCommand(subscribe_cmd);
+		subscribe_form.addCommand(unsubscribe_cmd);
+		subscribe_form.setCommandListener(this);
 
 		online_img = loadImage("/online.png");
 		offline_img = loadImage("/offline.png");
