@@ -17,8 +17,11 @@ package net.sourceforge.jxa.client;
  */
 
 import net.sourceforge.jxa.*;
+
 import java.io.*;
-import java.util.*;
+import java.util.Enumeration;
+import java.util.Vector;
+
 import javax.microedition.midlet.*;
 import javax.microedition.lcdui.*;
 
@@ -26,6 +29,8 @@ import org.jabber.task.Task;
 
 public class jxac extends MIDlet implements CommandListener, XmppListener {
 	private Form login_form;
+	private Form subscribe_form;
+	private Form update_form;
 	private List contacts_list;
 	private Alert msg_alert;
 	private TextBox send_box;
@@ -33,6 +38,8 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 	private TextField passwd_field;
 	private TextField server_field;
 	private TextField subscribe_field;
+	private TextField nick_field;
+	private TextField group_field;
 	private Command exit_cmd;
 	private Command login_cmd;
 	private Command send_cmd;
@@ -40,12 +47,13 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 	private Command contact_cmd;
 	private Command subscribe_cmd;
 	private Command unsubscribe_cmd;
+	private Command rename_cmd;
+	private Command update_cmd;
 	private Image offline_img;
 	private Image online_img;
-	private Form subscribe_form;
 	private String whom;
 	private Jxa jxa;
-	private Roster roster = new Roster();
+	private Vector jid_list;
 
 	private Image loadImage(String name) {
 		Image image = null;
@@ -71,22 +79,43 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 	}
 
 	public void onAuthFailed(final String message) {
-		java.lang.System.out.println("*debug* Auth Failed");
+		System.out.println("*debug* Auth Failed");
 	}
 
 	public void onMessageEvent(final String from, final String body) {
 		msg_alert = new Alert("from " + from, body, null, AlertType.INFO);
 		msg_alert.setTimeout(Alert.FOREVER);
 		Display.getDisplay(this).setCurrent(msg_alert);
-		java.lang.System.out.println("*debug* message, " + from + ":" + body);
-		java.lang.System.out
-				.println("*debug* " + this.roster.get_allMessages());
+		System.out.println("*debug* message, " + from + ":" + body);
+	}
+	
+	private int jidIndex(String jid) {
+		for (int i = 0; i < jid_list.size(); i++)
+			if (jid.equals((String) jid_list.elementAt(i)))
+				return i;
+		return -1;
 	}
 
 	public void onContactEvent(final String jid, final String name,
 			final String group, final String subscription) {
-		if (subscription.equals("both"))
-			contacts_list.append(jid, offline_img);
+		if (subscription.equals("both")) {
+			int index = jidIndex(jid);
+
+			String showName;
+			if (name != null)
+				showName = name;
+			else
+				showName = jid;
+			if (group != null)
+				showName = showName + " (" + group + ")";
+			if (index == -1) {
+				contacts_list.append(showName, offline_img);
+				jid_list.addElement(jid);
+			} else {
+				Image image = contacts_list.getImage(index);
+				contacts_list.set(index, showName, image);
+			}
+		}
 	}
 
 	public void onContactOverEvent() {
@@ -94,16 +123,15 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 
 	public void onStatusEvent(final String jid, final String show,
 			final String status) {
-		java.lang.System.out.println("*debug* onStatusEvent: " + jid + ", "
-				+ show + ", " + status);
 		int i = jid.indexOf('/');
-		String name = jid.substring(0, i);
-		for (i = 0; i < contacts_list.size(); i++) {
-			if (name.equals(contacts_list.getString(i)))
-				if (show.equals("na"))
-					contacts_list.set(i, name, offline_img);
-				else
-					contacts_list.set(i, name, online_img);
+		String bare_jid = jid.substring(0, i);
+		int index = jidIndex(bare_jid);
+		if (index != -1) {
+			String name = contacts_list.getString(index);
+			if (show.equals("na"))
+				contacts_list.set(index, name, offline_img);
+			else
+				contacts_list.set(index, name, online_img);
 		}
 	}
 
@@ -139,6 +167,24 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 			Display.getDisplay(this).setCurrent(contacts_list);
 		} else if (cmd == contact_cmd) {
 			Display.getDisplay(this).setCurrent(subscribe_form);
+		} else if (cmd == rename_cmd) {
+			whom = (String) jid_list.elementAt(contacts_list
+					.getSelectedIndex());
+			String name = contacts_list.getString(contacts_list.
+					getSelectedIndex());
+			update_form.setTitle("update " + name);
+			Display.getDisplay(this).setCurrent(update_form);
+		} else if (cmd == update_cmd) {
+			String nick = nick_field.getString();
+			String group = group_field.getString();
+			Vector groupList = new Vector();
+			groupList.addElement(group);
+			jxa.saveContact(whom, nick, groupList.elements(), null);
+			try {
+				jxa.getRoster();
+			} catch (IOException e) {
+			}
+			Display.getDisplay(this).setCurrent(contacts_list);
 		} else if (cmd == subscribe_cmd) {
 			jxa.subscribe(subscribe_field.getString());
 			Display.getDisplay(this).setCurrent(contacts_list);
@@ -146,16 +192,20 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 			jxa.unsubscribe(subscribe_field.getString());
 			Display.getDisplay(this).setCurrent(contacts_list);
 		} else if (cmd == List.SELECT_COMMAND) {
-			String to = contacts_list.getString(contacts_list
+			whom = (String) jid_list.elementAt(contacts_list
 					.getSelectedIndex());
-			whom = to;
-			send_box.setTitle("to " + to);
+			String name = contacts_list.getString(contacts_list.
+					getSelectedIndex());
+			update_form.setTitle("update " + name);
+			send_box.setTitle("to " + name);
 			Display.getDisplay(this).setCurrent(send_box);
 		} else if (cmd == exit_cmd)
 			notifyDestroyed();
 	}
 
 	public void startApp() {
+		jid_list = new Vector();
+		
 		login_form = new Form("login");
 		id_field = new TextField("JID(xxx@xxx.xxx)", "aiv.tst@gmail.com", 30, TextField.ANY);
 		login_form.append(id_field);
@@ -171,9 +221,11 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 		login_form.setCommandListener(this);
 
 		contacts_list = new List("connecting...", List.IMPLICIT);
-		contacts_list.addCommand(exit_cmd);
-		contact_cmd = new Command("Contact", Command.OK, 1);
+		//contacts_list.addCommand(exit_cmd);
+		contact_cmd = new Command("Contact", Command.OK, 0);
+		rename_cmd = new Command("Rename", Command.ITEM, 1);
 		contacts_list.addCommand(contact_cmd);
+		contacts_list.addCommand(rename_cmd);
 		contacts_list.setCommandListener(this);
 
 		send_box = new TextBox(null, null, 50, TextField.ANY);
@@ -185,12 +237,23 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 		
 		subscribe_form = new Form("subscribe");
 		subscribe_field = new TextField("JID(xxx@xxx.xxx)", "aiv.tst@gmail.com", 30, TextField.ANY);
-		subscribe_form.append(subscribe_field);
 		subscribe_cmd = new Command("Subscribe", Command.OK, 1);
 		unsubscribe_cmd = new Command("Unsubscribe", Command.OK, 1);
+		subscribe_form.append(subscribe_field);
+		subscribe_form.addCommand(back_cmd);
 		subscribe_form.addCommand(subscribe_cmd);
 		subscribe_form.addCommand(unsubscribe_cmd);
 		subscribe_form.setCommandListener(this);
+		
+		update_form = new Form("update");
+		nick_field = new TextField("Nick", "", 20, TextField.ANY);
+		group_field = new TextField("Group", "", 20, TextField.ANY);
+		update_cmd = new Command("Update", Command.OK, 1);
+		update_form.append(nick_field);
+		update_form.append(group_field);
+		update_form.addCommand(back_cmd);
+		update_form.addCommand(update_cmd);
+		update_form.setCommandListener(this);
 
 		online_img = loadImage("/online.png");
 		offline_img = loadImage("/offline.png");
