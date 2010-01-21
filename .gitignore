@@ -1,5 +1,7 @@
 *.orig
-.svn
-.settings
+.svn/
+.settings/
 .mtj.tmp
-bin
+.mtj
+build.properties
+bin/
