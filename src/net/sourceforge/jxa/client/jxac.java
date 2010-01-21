@@ -114,6 +114,7 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 
 	public void onUnsubscribeEvent(final String jid) {
 		System.out.println("Unsubscribe from " + jid);
+		jxa.unsubscribe(jid);
 	}
 
 	public void onTaskEvent(Task task) {
