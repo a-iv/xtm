@@ -41,8 +41,15 @@ public class Packet {
 	 * @return True if corresponds
 	 */
 	public boolean equals(String elementName, String namespace) {
-		return ((getElementName() == null || getElementName().equals(elementName)) && 
-				(getNamespace() == null || getNamespace().equals(namespace)));
+		if (elementName == null && getElementName() != null)
+			return false;
+		if (elementName != null && !elementName.equals(getElementName()))
+			return false;
+		if (namespace == null && getNamespace() != null)
+			return false;
+		if (namespace != null && !namespace.equals(getNamespace()))
+			return false;
+		return true;
 	}
 	
 	/**
@@ -186,16 +193,10 @@ public class Packet {
 	public void removePacket(String elementName, String namespace) {
 		for (int index = 0; index < packets.size(); index++) {
 			Packet found = (Packet) packets.elementAt(index);
-			if (elementName == null && found.getElementName() != null)
-				continue;
-			if (elementName != null && !elementName.equals(found.getElementName()))
-				continue;
-			if (namespace == null && found.getNamespace() != null)
-				continue;
-			if (namespace != null && !namespace.equals(found.getNamespace()))
-				continue;
-			packets.removeElementAt(index);
-			index--;
+			if (found.equals(elementName, namespace)) {
+				packets.removeElementAt(index);
+				index--;
+			}
 		}
 	}
 

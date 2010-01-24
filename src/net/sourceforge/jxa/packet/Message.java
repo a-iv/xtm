@@ -15,6 +15,7 @@ public class Message extends Packet {
 	}
 
 	public void emit(Manager manager) throws IOException {
+		setProperty("to", to);
 		if (body != null) {
 			removePacket("body", null);
 			addPacket(new Packet("body", null, body));
@@ -23,7 +24,6 @@ public class Message extends Packet {
 			removePacket("subect", null);
 			addPacket(new Packet("subect", null, subject));
 		}
-		setProperty("to", to);
 		super.emit(manager);
 	}
 }

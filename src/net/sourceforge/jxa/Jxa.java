@@ -22,10 +22,12 @@ import net.sourceforge.jxa.packet.Bind;
 import net.sourceforge.jxa.packet.IQ;
 import net.sourceforge.jxa.packet.Message;
 import net.sourceforge.jxa.packet.Packet;
+import net.sourceforge.jxa.packet.Presence;
 import net.sourceforge.jxa.packet.Roster;
 import net.sourceforge.jxa.packet.RosterItem;
 import net.sourceforge.jxa.provider.IQProvider;
 import net.sourceforge.jxa.provider.MessageProvider;
+import net.sourceforge.jxa.provider.PresenceProvider;
 import net.sourceforge.jxa.provider.Provider;
 import net.sourceforge.jxa.provider.RosterProvider;
 
@@ -100,6 +102,7 @@ public class Jxa extends Manager {
 		this.use_ssl = use_ssl;
 		addProvider(new MessageProvider());
 		addProvider(new IQProvider());
+		addProvider(new PresenceProvider());
 		addProvider(new RosterProvider());
 		addProvider(new Provider("query", "jabber:iq:version", true));
 	}
@@ -303,35 +306,7 @@ public class Jxa extends Manager {
 	 */
 	private void sendPresence(final String to, final String type,
 			final String show, final String status, final int priority) {
-		try {
-			this.writer.startTag("presence");
-			if (type != null) {
-				this.writer.attribute("type", type);
-			}
-			if (to != null) {
-				this.writer.attribute("to", to);
-			}
-			if (show != null) {
-				this.writer.startTag("show");
-				this.writer.text(show);
-				this.writer.endTag();
-			}
-			if (status != null) {
-				this.writer.startTag("status");
-				this.writer.text(status);
-				this.writer.endTag();
-			}
-			if (priority != 0) {
-				this.writer.startTag("priority");
-				this.writer.text(Integer.toString(priority));
-				this.writer.endTag();
-			}
-			this.writer.endTag(); // presence
-			this.writer.flush();
-		} catch (final Exception e) {
-			// e.printStackTrace();
-			this.connectionFailed();
-		}
+		sendPacket(new Presence(to, type, show, status, priority));
 	}
 
 	/**
@@ -475,116 +450,19 @@ public class Jxa extends Manager {
 		if (!use_ssl)
 			this.reader.next(); // start tag
 		while (this.reader.next() == XmlReader.START_TAG) {
-			final String tmp = this.reader.getName();
-			if (tmp.equals("message")) {
-				parse(true);
-			} else if (tmp.equals("presence")) {
-				this.parsePresence();
-			} else if (tmp.equals("iq")) {
-				parse(true);
-				//this.parseIq();
-			} else {
-				this.parseIgnore();
-			}
+			parse(true);
+//			final String tmp = this.reader.getName();
+//			if (tmp.equals("message")) {
+//				parse(true);
+//			} else if (tmp.equals("presence")) {
+//				this.parsePresence();
+//			} else if (tmp.equals("iq")) {
+//				parse(true);
+//			} else {
+//				this.parseIgnore();
+//			}
 		}
-		// java.lang.System.out.println("leave parse() " + reader.getName());
 		this.reader.close();
-	}
-
-	/**
-	 * This method parses all presence stanzas, including subscription requests.
-	 * 
-	 * @throws java.io.IOException
-	 *             is thrown if {@link XmlReader} or {@link XmlWriter} throw an
-	 *             IOException.
-	 */
-	private void parsePresence() throws IOException {
-		final String from = this.reader.getAttribute("from"), type = this.reader
-				.getAttribute("type");
-		String status = "", show = "";
-		// int priority=-1;
-		while (this.reader.next() == XmlReader.START_TAG) {
-			final String tmp = this.reader.getName();
-			if (tmp.equals("status")) {
-				status = this.parseText();
-			} else if (tmp.equals("show")) {
-				show = this.parseText();
-				// else if(tmp.equals("priority"))
-				// priority = Integer.parseInt(parseText());
-			} else {
-				this.parseIgnore();
-			}
-		}
-
-		if (DEBUG)
-			java.lang.System.out.println("*debug* from,type,status,show:"
-					+ from + "," + type + "," + status + "," + show);
-
-		// if ((type != null) && (type.equals("unavailable") ||
-		// type.equals("unsubscribed") || type.equals("error"))) {
-		if (type == null) {
-			for (Enumeration e = listeners.elements(); e.hasMoreElements();) {
-				XmppListener xl = (XmppListener) e.nextElement();
-				xl.onStatusEvent(from, show, status);
-			}
-		} else {
-			if (type.equals("unsubscribed") || type.equals("error")) {
-				for (Enumeration e = listeners.elements(); e.hasMoreElements();) {
-					XmppListener xl = (XmppListener) e.nextElement();
-					xl.onUnsubscribeEvent(from);
-				}
-			} else if (type.equals("subscribe")) {
-				for (Enumeration e = listeners.elements(); e.hasMoreElements();) {
-					XmppListener xl = (XmppListener) e.nextElement();
-					xl.onSubscribeEvent(from);
-				}
-			} else if (type.equals("unavailable")) {
-				// final String jid = (from.indexOf('/') == -1) ? from :
-				// from.substring(0, from.indexOf('/'));
-				for (Enumeration e = listeners.elements(); e.hasMoreElements();) {
-					XmppListener xl = (XmppListener) e.nextElement();
-					// xl.onStatusEvent(jid, show, status);
-					xl.onStatusEvent(from, "na", status);
-				}
-			}
-		}
-	}
-
-	/**
-	 * This method parses all text inside of xml start and end tags.
-	 * 
-	 * @throws java.io.IOException
-	 *             is thrown if {@link XmlReader} or {@link XmlWriter} throw an
-	 *             IOException.
-	 */
-	private String parseText() throws IOException {
-		final String endTagName = this.reader.getName();
-		final StringBuffer str = new StringBuffer("");
-		int t = this.reader.next(); // omit start tag
-		while (!endTagName.equals(this.reader.getName())) {
-			if (t == XmlReader.TEXT) {
-				str.append(this.reader.getText());
-			}
-			t = this.reader.next();
-		}
-		return str.toString();
-	}
-
-	/**
-	 * This method doesn't parse tags it only let the reader go through unknown
-	 * tags.
-	 * 
-	 * @throws java.io.IOException
-	 *             is thrown if {@link XmlReader} or {@link XmlWriter} throw an
-	 *             IOException.
-	 */
-	private void parseIgnore() throws IOException {
-		int x;
-		while ((x = this.reader.next()) != XmlReader.END_TAG) {
-			if (x == XmlReader.START_TAG) {
-				this.parseIgnore();
-			}
-		}
 	}
 
 	/**
@@ -642,6 +520,17 @@ public class Jxa extends Manager {
 						String group = (String) groups.nextElement();
 			 			xl.onContactEvent(jid, name, group, subscription);
 					}
+				}
+			} else if (packet.equals("presence", null)) {
+				Presence presence = (Presence) packet;
+				if (presence.type == null) {
+					xl.onStatusEvent(presence.from, presence.show, presence.status);
+				} else if (presence.type.equals("unsubscribed") || presence.type.equals("error")) {
+					xl.onUnsubscribeEvent(presence.from);
+				} else if (presence.type.equals("subscribe")) {
+					xl.onSubscribeEvent(presence.from);
+				} else if (presence.type.equals("unavailable")) {
+					xl.onStatusEvent(presence.from, "na", presence.status);
 				}
 			} else {
 				xl.onEvent(packet);
