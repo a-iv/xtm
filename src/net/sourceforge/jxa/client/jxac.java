@@ -73,11 +73,7 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 	}
 
 	public void onAuth(final String resource) {
-		try {
-			jxa.getRoster();
-		} catch (final IOException ex) {
-			ex.printStackTrace();
-		}
+		jxa.getRoster();
 		contacts_list.setTitle("contacts");
 	}
 
@@ -126,6 +122,7 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 
 	public void onStatusEvent(final String jid, final String show,
 			final String status) {
+		System.out.println(":" + jid + " " + show + " " + status);
 		int i = jid.indexOf('/');
 		String bare_jid = jid.substring(0, i);
 		int index = jidIndex(bare_jid);
@@ -141,6 +138,7 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 	public void onSubscribeEvent(final String jid) {
 		System.out.println("Subscribe from " + jid);
 		jxa.subscribe(jid);
+		jxa.saveContact(jid, null, null, null);
 	}
 
 	public void onUnsubscribeEvent(final String jid) {
@@ -183,10 +181,7 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 			Vector groupList = new Vector();
 			groupList.addElement(group);
 			jxa.saveContact(whom, nick, groupList.elements(), null);
-			try {
-				jxa.getRoster();
-			} catch (IOException e) {
-			}
+			jxa.getRoster();
 			Display.getDisplay(this).setCurrent(contacts_list);
 		} else if (cmd == subscribe_cmd) {
 			jxa.subscribe(subscribe_field.getString());

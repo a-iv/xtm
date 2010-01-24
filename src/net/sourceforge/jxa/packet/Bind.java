@@ -3,6 +3,10 @@ package net.sourceforge.jxa.packet;
 import java.util.Enumeration;
 
 public class Bind extends Packet {
+	public Bind() {
+		super("bind", "urn:ietf:params:xml:ns:xmpp-bind");
+	}
+	
 	/**
 	 * Gets full JID value
 	 * 

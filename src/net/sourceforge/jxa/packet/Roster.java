@@ -4,6 +4,10 @@ import java.util.Enumeration;
 import java.util.Vector;
 
 public class Roster extends Packet {
+	public Roster() {
+		super("query", "jabber:iq:roster");
+	}
+	
 	/**
 	 * Gets items
 	 * 

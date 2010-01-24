@@ -4,6 +4,10 @@ import java.util.Enumeration;
 import java.util.Vector;
 
 public class RosterItem extends Packet {
+	public RosterItem() {
+		super("item", null);
+	}
+	
 	/**
 	 * Gets groups
 	 * 

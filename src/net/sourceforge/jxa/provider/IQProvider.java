@@ -1,7 +1,6 @@
 package net.sourceforge.jxa.provider;
 
 import java.io.IOException;
-import java.util.Enumeration;
 import java.util.Vector;
 
 import net.sourceforge.jxa.Manager;

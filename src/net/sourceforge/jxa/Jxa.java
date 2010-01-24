@@ -426,15 +426,10 @@ public class Jxa extends Manager {
 	 *             is thrown if {@link XmlReader} or {@link XmlWriter} throw an
 	 *             IOException.
 	 */
-	public void getRoster() throws IOException {
-		this.writer.startTag("iq");
-		this.writer.attribute("id", "roster");
-		this.writer.attribute("type", "get");
-		this.writer.startTag("query");
-		this.writer.attribute("xmlns", "jabber:iq:roster");
-		this.writer.endTag(); // query
-		this.writer.endTag(); // iq
-		this.writer.flush();
+	public void getRoster() {
+		IQ iq = new IQ(null, "get", "roster");
+		iq.addPacket(new Roster());
+		sendPacket(iq);
 	}
 
 	/**
@@ -449,19 +444,8 @@ public class Jxa extends Manager {
 	private void parse() throws IOException {
 		if (!use_ssl)
 			this.reader.next(); // start tag
-		while (this.reader.next() == XmlReader.START_TAG) {
+		while (this.reader.next() == XmlReader.START_TAG)
 			parse(true);
-//			final String tmp = this.reader.getName();
-//			if (tmp.equals("message")) {
-//				parse(true);
-//			} else if (tmp.equals("presence")) {
-//				this.parsePresence();
-//			} else if (tmp.equals("iq")) {
-//				parse(true);
-//			} else {
-//				this.parseIgnore();
-//			}
-		}
 		this.reader.close();
 	}
 
