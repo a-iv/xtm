@@ -19,8 +19,6 @@ package net.sourceforge.jxa.client;
 import net.sourceforge.jxa.*;
 import net.sourceforge.jxa.packet.Message;
 import net.sourceforge.jxa.packet.Packet;
-import net.sourceforge.jxa.provider.Provider;
-//import net.sourceforge.jxa.provider.Provider;
 
 import java.io.*;
 import java.util.Vector;
@@ -164,7 +162,6 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 			Display.getDisplay(this).setCurrent(contacts_list);
 		} else if (cmd == send_cmd) {
 			Message message = new Message();
-			//message.body = send_box.getString();
 			message.to = whom;
 			Task task = new Task();
 			task.description = send_box.getString();

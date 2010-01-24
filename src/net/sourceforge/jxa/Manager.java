@@ -38,6 +38,13 @@ public class Manager extends Thread {
 	public void removeProvider(final Provider provider) {
 		providers.removeElement(provider);
 	}
+	
+	/**
+	 * Gets providers
+	 */
+	public Enumeration getProviders() {
+		return providers.elements();
+	}
 
 	/**
 	 * Add a {@link XmppListener} to listen for events.
@@ -60,6 +67,29 @@ public class Manager extends Thread {
 		listeners.removeElement(xl);
 	}
 
+	/**
+	 * Parse incoming data using providers
+	 * 
+	 * @param providers
+	 * @param skipUnknown
+	 * @return
+	 * @throws IOException
+	 */
+	public Packet parse(Enumeration providers, boolean skipUnknown) throws IOException {
+		String elementName = reader.getName();
+		String namespace = reader.getAttribute("xmlns");
+		System.out.println(elementName + ":" + namespace);
+		for (; providers.hasMoreElements();) {
+			Provider provider = (Provider) providers.nextElement();
+			if (provider.equals(elementName, namespace)) {
+				return provider.parse(this);
+			}
+		}
+		if (skipUnknown)
+			return skipProvider.parse(this);
+		else
+			return defaultProvider.parse(this);
+	}
 
 	/**
 	 * Parse incoming data using registered providers
@@ -69,19 +99,7 @@ public class Manager extends Thread {
 	 * @throws IOException
 	 */
 	public Packet parse(boolean skipUnknown) throws IOException {
-		String elementName = reader.getName();
-		String namespace = reader.getAttribute("xmlns");
-		System.out.println(elementName + ":" + namespace);
-		for (Enumeration e = providers.elements(); e.hasMoreElements();) {
-			Provider provider = (Provider) e.nextElement();
-			if (provider.equals(elementName, namespace)) {
-				return provider.parse(this);
-			}
-		}
-		if (skipUnknown)
-			return skipProvider.parse(this);
-		else
-			return defaultProvider.parse(this);
+		return parse(providers.elements(), skipUnknown);
 	}
 	
 	/**

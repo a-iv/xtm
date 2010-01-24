@@ -18,7 +18,7 @@ public class Task extends Packet {
 	}
 
 	public void emit(Manager manager) throws IOException {
-		removePackets();
+		clearPackets();
 		if (sender != null)
 			addPacket(new Packet("sender", null, sender));
 		if (owner != null)

@@ -18,12 +18,16 @@ package net.sourceforge.jxa;
 
 import javax.microedition.io.*;
 
+import net.sourceforge.jxa.packet.Bind;
+import net.sourceforge.jxa.packet.IQ;
 import net.sourceforge.jxa.packet.Message;
 import net.sourceforge.jxa.packet.Packet;
+import net.sourceforge.jxa.packet.Roster;
+import net.sourceforge.jxa.packet.RosterItem;
+import net.sourceforge.jxa.provider.IQProvider;
 import net.sourceforge.jxa.provider.MessageProvider;
 import net.sourceforge.jxa.provider.Provider;
-
-import org.jabber.task.Task;
+import net.sourceforge.jxa.provider.RosterProvider;
 
 import java.io.*;
 import java.util.*;
@@ -94,8 +98,10 @@ public class Jxa extends Manager {
 		else
 			this.server = server;
 		this.use_ssl = use_ssl;
-		// this.start();
 		addProvider(new MessageProvider());
+		addProvider(new IQProvider());
+		addProvider(new RosterProvider());
+		addProvider(new Provider("query", "jabber:iq:version", true));
 	}
 
 	/**
@@ -289,58 +295,6 @@ public class Jxa extends Manager {
 		}
 	}
 
-	public void sendTask(final String to, final String description) {
-		try {
-			this.writer.startTag("message");
-			this.writer.attribute("type", "chat");
-			this.writer.attribute("to", to);
-			this.writer.startTag("task");
-
-			this.writer.startTag("owner");
-			this.writer.text(myjid);
-			this.writer.endTag();
-
-			this.writer.startTag("description");
-			this.writer.text(description);
-			this.writer.endTag();
-
-			this.writer.endTag();
-			this.writer.endTag();
-			this.writer.flush();
-		} catch (final Exception e) {
-			// e.printStackTrace();
-			this.connectionFailed();
-		}
-	}
-
-	public void sendTask(final String to, final Task task) {
-		try {
-			this.writer.startTag("message");
-			this.writer.attribute("type", "chat");
-			this.writer.attribute("to", to);
-			this.writer.startTag("task");
-
-			this.writer.startTag("owner");
-			this.writer.text(task.owner);
-			this.writer.endTag();
-
-			this.writer.startTag("description");
-			this.writer.text(task.description);
-			this.writer.endTag();
-
-			this.writer.startTag("theme");
-			this.writer.text(task.theme);
-			this.writer.endTag();
-
-			this.writer.endTag();
-			this.writer.endTag();
-			this.writer.flush();
-		} catch (final Exception e) {
-			// e.printStackTrace();
-			this.connectionFailed();
-		}
-	}
-
 	/**
 	 * Sends a presence stanza to a jid. This method can do various task but
 	 * it's private, please use setStatus to set your status or explicit
@@ -527,157 +481,14 @@ public class Jxa extends Manager {
 			} else if (tmp.equals("presence")) {
 				this.parsePresence();
 			} else if (tmp.equals("iq")) {
-				this.parseIq();
+				parse(true);
+				//this.parseIq();
 			} else {
 				this.parseIgnore();
 			}
 		}
 		// java.lang.System.out.println("leave parse() " + reader.getName());
 		this.reader.close();
-	}
-
-	/**
-	 * This method parses all info/query stanzas, including authentication
-	 * mechanism and roster. It also answers version queries.
-	 * 
-	 * @throws java.io.IOException
-	 *             is thrown if {@link XmlReader} or {@link XmlWriter} throw an
-	 *             IOException.
-	 */
-	private void parseIq() throws IOException {
-		if (DEBUG)
-			java.lang.System.out.println("*debug* paeseIq");
-		String type = this.reader.getAttribute("type");
-		final String id = this.reader.getAttribute("id");
-		final String from = this.reader.getAttribute("from");
-		if (type.equals("error")) {
-			while (this.reader.next() == XmlReader.START_TAG) {
-				// String name = reader.getName();
-				if (this.reader.getName().equals("error")) {
-					final String code = this.reader.getAttribute("code");
-					for (Enumeration e = listeners.elements(); e
-							.hasMoreElements();) {
-						XmppListener xl = (XmppListener) e.nextElement();
-						xl.onAuthFailed(code + ": " + this.parseText());
-					}
-				} else {
-					this.parseText();
-				}
-			}
-		} else if (type.equals("result") && (id != null)
-				&& id.equals("res_binding")) {
-			// authorized
-			while (true) {
-				reader.next();
-				String tagname = reader.getName();
-				if (tagname != null) {
-					if ((reader.getType() == XmlReader.START_TAG)
-							&& tagname.equals("jid")) {
-						reader.next();
-						String rsp_jid = reader.getText();
-						int i = rsp_jid.indexOf('/');
-						this.resource = rsp_jid.substring(i + 1);
-						// java.lang.System.out.println(this.resource);
-					} else if (tagname.equals("iq"))
-						break;
-				}
-			}
-			for (Enumeration e = listeners.elements(); e.hasMoreElements();) {
-				XmppListener xl = (XmppListener) e.nextElement();
-				xl.onAuth(this.resource);
-			}
-			this.sendPresence(null, null, null, null, this.priority);
-		} else {
-			// java.lang.System.out.println("contacts list");
-			while (this.reader.next() == XmlReader.START_TAG) {
-				if (this.reader.getName().equals("query")) {
-					if (this.reader.getAttribute("xmlns").equals(
-							"jabber:iq:roster")) {
-						while (this.reader.next() == XmlReader.START_TAG) {
-							if (this.reader.getName().equals("item")) {
-								type = this.reader.getAttribute("type");
-								String jid = reader.getAttribute("jid");
-								String name = reader.getAttribute("name");
-								String subscription = reader
-										.getAttribute("subscription");
-								// newjid = (jid.indexOf('/') == -1) ? jid :
-								// jid.substring(0, jid.indexOf('/'));
-								boolean check = true;
-								// yctai
-								/*
-								 * for (Enumeration e = listeners.elements();
-								 * e.hasMoreElements();) { XmppListener xl =
-								 * (XmppListener) e.nextElement();
-								 * xl.onContactRemoveEvent(newjid); }
-								 */
-								while (this.reader.next() == XmlReader.START_TAG) {
-									if (this.reader.getName().equals("group")) {
-										for (Enumeration e = listeners
-												.elements(); e
-												.hasMoreElements();) {
-											XmppListener xl = (XmppListener) e
-													.nextElement();
-											xl.onContactEvent(jid, name, this
-													.parseText(), subscription);
-										}
-										check = false;
-									} else {
-										this.parseIgnore();
-									}
-								}
-								// if (check && !subscription.equals("remove"))
-								if (check) {
-									for (Enumeration e = listeners.elements(); e
-											.hasMoreElements();) {
-										XmppListener xl = (XmppListener) e
-												.nextElement();
-										xl.onContactEvent(jid, name, "",
-												subscription);
-									}
-								}
-							} else {
-								this.parseIgnore();
-							}
-						}
-						for (Enumeration e = listeners.elements(); e
-								.hasMoreElements();) {
-							XmppListener xl = (XmppListener) e.nextElement();
-							xl.onContactOverEvent();
-						}
-					} else if (this.reader.getAttribute("xmlns").equals(
-							"jabber:iq:version")) {
-						while (this.reader.next() == XmlReader.START_TAG) {
-							this.parseIgnore();
-						}
-						// reader.next();
-						// send version
-						this.writer.startTag("iq");
-						this.writer.attribute("type", "result");
-						this.writer.attribute("id", id);
-						this.writer.attribute("to", from);
-						this.writer.startTag("query");
-						this.writer.attribute("xmlns", "jabber:iq:version");
-
-						this.writer.startTag("name");
-						this.writer.text("jxa");
-						this.writer.endTag();
-						this.writer.startTag("version");
-						writer.text("1.0");
-						this.writer.endTag();
-						this.writer.startTag("os");
-						this.writer.text("J2ME");
-						this.writer.endTag();
-
-						this.writer.endTag(); // query
-						this.writer.endTag(); // iq
-					} else {
-						this.parseIgnore();
-					}
-				} else {
-					this.parseIgnore();
-				}
-			}
-		}
 	}
 
 	/**
@@ -737,29 +548,6 @@ public class Jxa extends Manager {
 				}
 			}
 		}
-	}
-
-	private Task parseTask() throws IOException {
-		Task task = new Task();
-		int type = reader.next();
-		while (type == XmlReader.START_TAG) {
-			String tagName = reader.getName();
-			if (tagName.equals("sender")) {
-				task.sender = this.parseText();
-			} else if (tagName.equals("owner")) {
-				task.owner = this.parseText();
-			} else if (tagName.equals("theme")) {
-				task.theme = this.parseText();
-			} else if (tagName.equals("description")) {
-				task.description = this.parseText();
-			} else if (tagName.equals("fulfilment")) {
-				task.fulfilment = Integer.parseInt(this.parseText());
-			} else {
-				this.parseIgnore();
-			}
-			type = reader.next();
-		}
-		return task;
 	}
 
 	/**
@@ -829,7 +617,7 @@ public class Jxa extends Manager {
 		for (Enumeration e = listeners.elements(); e.hasMoreElements();) {
 			XmppListener xl = (XmppListener) e.nextElement();
 			System.out.println(packet.getElementName());
-			if (packet.getElementName().equals("message")) {
+			if (packet.equals("message", null)) {
 				Message message = (Message) packet;
 				if (message.body != null) {
 					int index = message.from.indexOf('/');
@@ -837,9 +625,47 @@ public class Jxa extends Manager {
 						message.from.substring(0, index), message.body);
 					continue;
 				}
-			} else
+			} else if (packet.equals("error", null)) {
+				// TODO: Why?
+				xl.onAuthFailed(packet.getProperty("code") + ": " + packet.getPayload());
+			} else if (packet.equals("bind", "urn:ietf:params:xml:ns:xmpp-bind")) {
+				Bind bind = (Bind) packet;
+				xl.onAuth(bind.getResource());
+			} else if (packet.equals("query", "jabber:iq:roster")) {
+				Roster roster = (Roster) packet;
+				for (Enumeration items = roster.getItems(); items.hasMoreElements();) {
+					RosterItem item = (RosterItem) items.nextElement();
+					String jid = item.getProperty("jid");
+					String name = item.getProperty("name");
+					String subscription = item.getProperty("subscription");
+					for (Enumeration groups = item.getGroups(); groups.hasMoreElements();) {
+						String group = (String) groups.nextElement();
+			 			xl.onContactEvent(jid, name, group, subscription);
+					}
+				}
+			} else {
 				xl.onEvent(packet);
+			}
+		}
+		if (packet.equals("bind", "urn:ietf:params:xml:ns:xmpp-bind")) {
+			sendPresence(null, null, null, null, this.priority);
+		} else if (packet.equals("query", "jabber:iq:version")) {
+			IQ iq = new IQ();
+			iq.type = "result";
+			iq.id = packet.getProperty("id");
+			iq.to = packet.getProperty("from");
+			
+			Packet query = new Packet("query", "jabber:iq:version");
+			query.addPacket(new Packet("name", null, "mja"));
+			query.addPacket(new Packet("version", null, "1.0"));
+			query.addPacket(new Packet("os", null, "J2ME"));
+			
+			iq.addPacket(query);
+			try {
+				iq.emit(this);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
-
 }

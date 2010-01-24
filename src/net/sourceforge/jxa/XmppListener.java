@@ -17,9 +17,6 @@
 package net.sourceforge.jxa;
 
 import net.sourceforge.jxa.packet.Packet;
-import net.sourceforge.jxa.provider.Provider;
-
-import org.jabber.task.Task;
 
 /**
  * Interface class to implement events

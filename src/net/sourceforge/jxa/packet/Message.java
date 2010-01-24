@@ -1,7 +1,6 @@
 package net.sourceforge.jxa.packet;
 
 import java.io.IOException;
-import java.util.Enumeration;
 
 import net.sourceforge.jxa.Manager;
 
@@ -16,22 +15,15 @@ public class Message extends Packet {
 	}
 
 	public void emit(Manager manager) throws IOException {
-		System.out.println("Cleaning: " + getPacketCount());
-		for (Enumeration e = getPackets(); e.hasMoreElements();) {
-			Packet found = (Packet) e.nextElement();
-			System.out.println(found.getElementName());
-			if (found.getElementName().equals("body") && found.getNamespace() == null) {
-				System.out.println("Remove it");
-				removePacket(found);
-			}
-		}
-		System.out.println("Result: " + getPacketCount());
-		if (body != null)
+		if (body != null) {
+			removePacket("body", null);
 			addPacket(new Packet("body", null, body));
-		if (subject != null)
+		}
+		if (subject != null) {
+			removePacket("subect", null);
 			addPacket(new Packet("subect", null, subject));
-		if (to != null)
-			setProperty("to", to);
+		}
+		setProperty("to", to);
 		super.emit(manager);
 	}
 }

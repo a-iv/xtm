@@ -6,7 +6,6 @@ import java.util.Hashtable;
 import java.util.Vector;
 
 import net.sourceforge.jxa.Manager;
-import net.sourceforge.jxa.XmlReader;
 
 public class Packet {
 	private String elementName;
@@ -32,6 +31,18 @@ public class Packet {
 		properties = new Hashtable();
 		packets = new Vector();
 		setNamespace(namespace);
+	}
+	
+	/**
+	 * Validate whether elementName and namespace correspond to this packet.
+	 * 
+	 * @param elementName
+	 * @param namespace
+	 * @return True if corresponds
+	 */
+	public boolean equals(String elementName, String namespace) {
+		return ((getElementName() == null || getElementName().equals(elementName)) && 
+				(getNamespace() == null || getNamespace().equals(namespace)));
 	}
 	
 	/**
@@ -169,10 +180,23 @@ public class Packet {
 	/**
 	 * Remove inner packet
 	 * 
-	 * @param packet to be added
+	 * @param elementName
+	 * @param namespace
 	 */
-	public void removePacket(Packet packet) {
-		packets.removeElement(packet);
+	public void removePacket(String elementName, String namespace) {
+		for (int index = 0; index < packets.size(); index++) {
+			Packet found = (Packet) packets.elementAt(index);
+			if (elementName == null && found.getElementName() != null)
+				continue;
+			if (elementName != null && !elementName.equals(found.getElementName()))
+				continue;
+			if (namespace == null && found.getNamespace() != null)
+				continue;
+			if (namespace != null && !namespace.equals(found.getNamespace()))
+				continue;
+			packets.removeElementAt(index);
+			index--;
+		}
 	}
 
 	/**
@@ -180,7 +204,7 @@ public class Packet {
 	 * 
 	 * @param packet to be added
 	 */
-	public void removePackets() {
+	public void clearPackets() {
 		packets.removeAllElements();
 	}
 	

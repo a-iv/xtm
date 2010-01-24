@@ -11,6 +11,10 @@ public class SkipProvider extends Provider {
 		super(elementName, namespace);
 	}
 
+	public SkipProvider(String elementName, String namespace, boolean makeEvent) {
+		super(elementName, namespace, makeEvent);
+	}
+
 	public Packet parse(Manager manager) throws IOException {
 		System.out.println("Skip: " + manager.reader.getName());
 		while (true) {
