@@ -17,9 +17,11 @@ package net.sourceforge.jxa.client;
  */
 
 import net.sourceforge.jxa.*;
+import net.sourceforge.jxa.packet.Message;
+import net.sourceforge.jxa.provider.Provider;
+//import net.sourceforge.jxa.provider.Provider;
 
 import java.io.*;
-import java.util.Enumeration;
 import java.util.Vector;
 
 import javax.microedition.midlet.*;
@@ -157,13 +159,16 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 			String passwd = passwd_field.getString();
 			String server = server_field.getString();
 			Display.getDisplay(this).setCurrent(contacts_list);
-			jxa = new Jxa(id, passwd, "mobile", 10, server, "5223", true);
+			jxa = new Jxa(id, passwd, "jxac", 10, server, "5223", true);
 			jxa.addListener(this);
 			jxa.start();
 		} else if (cmd == back_cmd) {
 			Display.getDisplay(this).setCurrent(contacts_list);
 		} else if (cmd == send_cmd) {
-			jxa.sendTask(whom, send_box.getString());
+			Message message = new Message();
+			message.body = send_box.getString();
+			message.to = whom;
+			jxa.sendPacket(message);
 			Display.getDisplay(this).setCurrent(contacts_list);
 		} else if (cmd == contact_cmd) {
 			Display.getDisplay(this).setCurrent(subscribe_form);
@@ -265,5 +270,8 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 	}
 
 	public void destroyApp(boolean unconditional) {
+	}
+
+	public void onEvent(Provider provider, Object object) {
 	}
 }

@@ -18,6 +18,11 @@ package net.sourceforge.jxa;
 
 import javax.microedition.io.*;
 
+import net.sourceforge.jxa.packet.Message;
+import net.sourceforge.jxa.packet.Packet;
+import net.sourceforge.jxa.provider.MessageProvider;
+import net.sourceforge.jxa.provider.Provider;
+
 import org.jabber.task.Task;
 
 import java.io.*;
@@ -31,21 +36,17 @@ import java.util.*;
  * @since 1.0
  */
 
-public class Jxa extends Thread {
+public class Jxa extends Manager {
 
 	final static boolean DEBUG = true;
 
-	private final String host, port, username, password, myjid, server;
+	public final String host, port, username, password, myjid, server;
 	private final boolean use_ssl;
 	private String resource;
 	private final int priority;
 
-	private XmlReader reader;
-	private XmlWriter writer;
 	private InputStream is;
 	private OutputStream os;
-
-	private Vector listeners = new Vector();
 
 	/**
 	 * If you create this object all variables will be saved and the method
@@ -76,7 +77,8 @@ public class Jxa extends Thread {
 	 * this.server = host; this.start(); }
 	 */
 	// jid must in the form "username@host"
-	// to login Google Talk, set port to 5223 (NOT 5222 in their offical guide)	public Jxa(final String jid, final String password, final String resource,
+	// to login Google Talk, set port to 5223 (NOT 5222 in their offical guide)
+	public Jxa(final String jid, final String password, final String resource,
 			final int priority, final String server, final String port,
 			final boolean use_ssl) {
 		int i = jid.indexOf('@');
@@ -93,6 +95,7 @@ public class Jxa extends Thread {
 			this.server = server;
 		this.use_ssl = use_ssl;
 		// this.start();
+		addProvider(new MessageProvider());
 	}
 
 	/**
@@ -150,27 +153,6 @@ public class Jxa extends Thread {
 			// hier entsteht der connection failed bug (Network Down)
 			this.connectionFailed(e.toString());
 		}
-	}
-
-	/**
-	 * Add a {@link XmppListener} to listen for events.
-	 * 
-	 * @param xl
-	 *            a XmppListener object
-	 */
-	public void addListener(final XmppListener xl) {
-		if (!listeners.contains(xl))
-			listeners.addElement(xl);
-	}
-
-	/**
-	 * Remove a {@link XmppListener} from this class.
-	 * 
-	 * @param xl
-	 *            a XmppListener object
-	 */
-	public void removeListener(final XmppListener xl) {
-		listeners.removeElement(xl);
 	}
 
 	/**
@@ -298,27 +280,12 @@ public class Jxa extends Thread {
 		}
 	}
 
-	/**
-	 * Sends a message text to a known jid.
-	 * 
-	 * @param to
-	 *            the JID of the recipient
-	 * @param msg
-	 *            the message itself
-	 */
-	public void sendMessage(final String to, final String msg) {
+	public void sendPacket(Packet packet) {
 		try {
-			this.writer.startTag("message");
-			this.writer.attribute("type", "chat");
-			this.writer.attribute("to", to);
-			this.writer.startTag("body");
-			this.writer.text(msg);
-			this.writer.endTag();
-			this.writer.endTag();
-			this.writer.flush();
-		} catch (final Exception e) {
-			// e.printStackTrace();
-			this.connectionFailed();
+			packet.receive(this);
+			writer.flush();
+		} catch (IOException e) {
+			connectionFailed();
 		}
 	}
 
@@ -551,14 +518,12 @@ public class Jxa extends Thread {
 	 *             IOException.
 	 */
 	private void parse() throws IOException {
-		if (DEBUG)
-			java.lang.System.out.println("*debug* parsing");
 		if (!use_ssl)
 			this.reader.next(); // start tag
 		while (this.reader.next() == XmlReader.START_TAG) {
 			final String tmp = this.reader.getName();
 			if (tmp.equals("message")) {
-				this.parseMessage();
+				parse(true);
 			} else if (tmp.equals("presence")) {
 				this.parsePresence();
 			} else if (tmp.equals("iq")) {
@@ -798,44 +763,6 @@ public class Jxa extends Thread {
 	}
 
 	/**
-	 * This method parses all incoming messages.
-	 * 
-	 * @throws java.io.IOException
-	 *             is thrown if {@link XmlReader} or {@link XmlWriter} throw an
-	 *             IOException.
-	 */
-	private void parseMessage() throws IOException {
-		final String from = this.reader.getAttribute("from"), type = this.reader
-				.getAttribute("type");
-		String body = null, subject = null;
-		Task task = null;
-		while (this.reader.next() == XmlReader.START_TAG) {
-			final String tmp = this.reader.getName();
-			if (tmp.equals("body")) {
-				body = this.parseText();
-			} else if (tmp.equals("subject")) {
-				subject = this.parseText();
-			} else if (tmp.equals("task")) {
-				java.lang.System.out.println("Task");
-				task = this.parseTask();
-			} else {
-				this.parseIgnore();
-			}
-		}
-		// (from, subject, body);
-		for (Enumeration e = listeners.elements(); e.hasMoreElements();) {
-			XmppListener xl = (XmppListener) e.nextElement();
-			if (task != null) {
-				java.lang.System.out.println("Event");
-				xl.onTaskEvent(task);
-			} else {
-				xl.onMessageEvent((from.indexOf('/') == -1) ? from : from
-						.substring(0, from.indexOf('/')), body);
-			}
-		}
-	}
-
-	/**
 	 * This method parses all text inside of xml start and end tags.
 	 * 
 	 * @throws java.io.IOException
@@ -897,4 +824,22 @@ public class Jxa extends Thread {
 		}
 	}
 
-};
+	public void event(Provider provider, Packet packet) {
+		System.out.println("JXA event: " + provider + " , " + packet);
+		for (Enumeration e = listeners.elements(); e.hasMoreElements();) {
+			XmppListener xl = (XmppListener) e.nextElement();
+			System.out.println(packet.getElementName());
+			if (packet.getElementName().equals("message")) {
+				Message message = (Message) packet;
+				if (message.body != null) {
+					int index = message.from.indexOf('/');
+					xl.onMessageEvent((index == -1) ? message.from : 
+						message.from.substring(0, index), message.body);
+					continue;
+				}
+			}
+			xl.onEvent(provider, packet);
+		}
+	}
+
+}
