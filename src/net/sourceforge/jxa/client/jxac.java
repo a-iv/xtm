@@ -18,6 +18,7 @@ package net.sourceforge.jxa.client;
 
 import net.sourceforge.jxa.*;
 import net.sourceforge.jxa.packet.Message;
+import net.sourceforge.jxa.packet.Packet;
 import net.sourceforge.jxa.provider.Provider;
 //import net.sourceforge.jxa.provider.Provider;
 
@@ -28,6 +29,7 @@ import javax.microedition.midlet.*;
 import javax.microedition.lcdui.*;
 
 import org.jabber.task.Task;
+import org.jabber.task.TaskProvider;
 
 public class jxac extends MIDlet implements CommandListener, XmppListener {
 	private Form login_form;
@@ -56,6 +58,7 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 	private String whom;
 	private Jxa jxa;
 	private Vector jid_list;
+	private TaskProvider taskProvider = new TaskProvider(); 
 
 	private Image loadImage(String name) {
 		Image image = null;
@@ -147,12 +150,6 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 		jxa.unsubscribe(jid);
 	}
 
-	public void onTaskEvent(Task task) {
-		msg_alert = new Alert("Task " + task.sender, task.description, null, AlertType.INFO);
-		msg_alert.setTimeout(Alert.FOREVER);
-		Display.getDisplay(this).setCurrent(msg_alert);
-	}
-	
 	public void commandAction(final Command cmd, final Displayable displayable) {
 		if (cmd == login_cmd) {
 			String id = id_field.getString();
@@ -161,13 +158,17 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 			Display.getDisplay(this).setCurrent(contacts_list);
 			jxa = new Jxa(id, passwd, "jxac", 10, server, "5223", true);
 			jxa.addListener(this);
+			jxa.addProvider(taskProvider);
 			jxa.start();
 		} else if (cmd == back_cmd) {
 			Display.getDisplay(this).setCurrent(contacts_list);
 		} else if (cmd == send_cmd) {
 			Message message = new Message();
-			message.body = send_box.getString();
+			//message.body = send_box.getString();
 			message.to = whom;
+			Task task = new Task();
+			task.description = send_box.getString();
+			message.addPacket(task);
 			jxa.sendPacket(message);
 			Display.getDisplay(this).setCurrent(contacts_list);
 		} else if (cmd == contact_cmd) {
@@ -272,6 +273,12 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 	public void destroyApp(boolean unconditional) {
 	}
 
-	public void onEvent(Provider provider, Object object) {
+	public void onEvent(Packet packet) {
+		if (taskProvider.equals(packet)) {
+			Task task = (Task) packet;
+			msg_alert = new Alert("Task " + task.sender, task.description, null, AlertType.INFO);
+			msg_alert.setTimeout(Alert.FOREVER);
+			Display.getDisplay(this).setCurrent(msg_alert);
+		}
 	}
 }

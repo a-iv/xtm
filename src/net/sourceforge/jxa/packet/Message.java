@@ -15,7 +15,7 @@ public class Message extends Packet {
 		super("message", null);
 	}
 
-	public void receive(Manager manager) throws IOException {
+	public void emit(Manager manager) throws IOException {
 		System.out.println("Cleaning: " + getPacketCount());
 		for (Enumeration e = getPackets(); e.hasMoreElements();) {
 			Packet found = (Packet) e.nextElement();
@@ -32,6 +32,6 @@ public class Message extends Packet {
 			addPacket(new Packet("subect", null, subject));
 		if (to != null)
 			setProperty("to", to);
-		super.receive(manager);
+		super.emit(manager);
 	}
 }

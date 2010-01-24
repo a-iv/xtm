@@ -282,7 +282,7 @@ public class Jxa extends Manager {
 
 	public void sendPacket(Packet packet) {
 		try {
-			packet.receive(this);
+			packet.emit(this);
 			writer.flush();
 		} catch (IOException e) {
 			connectionFailed();
@@ -824,8 +824,8 @@ public class Jxa extends Manager {
 		}
 	}
 
-	public void event(Provider provider, Packet packet) {
-		System.out.println("JXA event: " + provider + " , " + packet);
+	public void event(Packet packet) {
+		System.out.println("JXA event: " + packet);
 		for (Enumeration e = listeners.elements(); e.hasMoreElements();) {
 			XmppListener xl = (XmppListener) e.nextElement();
 			System.out.println(packet.getElementName());
@@ -837,8 +837,8 @@ public class Jxa extends Manager {
 						message.from.substring(0, index), message.body);
 					continue;
 				}
-			}
-			xl.onEvent(provider, packet);
+			} else
+				xl.onEvent(packet);
 		}
 	}
 

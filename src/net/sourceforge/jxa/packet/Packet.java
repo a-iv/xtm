@@ -6,6 +6,7 @@ import java.util.Hashtable;
 import java.util.Vector;
 
 import net.sourceforge.jxa.Manager;
+import net.sourceforge.jxa.XmlReader;
 
 public class Packet {
 	private String elementName;
@@ -139,7 +140,7 @@ public class Packet {
 		for (Enumeration e = getProperties(); e.hasMoreElements();) {
 			Object key = e.nextElement();
 			if (name.equals((String) key))
-					properties.remove(key);
+				properties.remove(key);
 		}
 	}
 	
@@ -173,31 +174,35 @@ public class Packet {
 	public void removePacket(Packet packet) {
 		packets.removeElement(packet);
 	}
+
+	/**
+	 * Remove inner packet
+	 * 
+	 * @param packet to be added
+	 */
+	public void removePackets() {
+		packets.removeAllElements();
+	}
 	
 	/**
-	 * Receive this packet
+	 * Publish this packet to manager`s writer
 	 * 
 	 * @param manager
 	 * @throws IOException
 	 */
-	public void receive(Manager manager) throws IOException {
-		System.out.println("Start " + getElementName());
+	public void emit(Manager manager) throws IOException {
 		manager.writer.startTag(getElementName());
-		System.out.println("Properties");
 		for (Enumeration e = getProperties(); e.hasMoreElements();) {
 			String name = (String) e.nextElement();
 			manager.writer.attribute(name, getProperty(name));
 		}
-		System.out.println("Payload");
 		if (payload != null) {
 			manager.writer.text(payload);
 		}
-		System.out.println("Inner");
 		for (Enumeration e = getPackets(); e.hasMoreElements();) {
 			Packet packet = (Packet) e.nextElement();
-			packet.receive(manager);
+			packet.emit(manager);
 		}
-		System.out.println("End");
 		manager.writer.endTag();
 	}
 }

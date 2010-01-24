@@ -10,10 +10,16 @@ import net.sourceforge.jxa.packet.Packet;
 public class Provider {
 	private String elementName;
 	private String namespace;
-	
+	private boolean makeEvent;
+
 	public Provider(String elementName, String namespace) {
+		this(elementName, namespace, false);
+	}
+	
+	public Provider(String elementName, String namespace, boolean makeEvent) {
 		this.elementName = elementName;
 		this.namespace = namespace;
+		this.makeEvent = makeEvent;
 	}
 	
 	/**
@@ -24,11 +30,21 @@ public class Provider {
 	 * @param namespace
 	 * @return True if corresponds
 	 */
-	public boolean validate(String elementName, String namespace) {
+	public boolean equals(String elementName, String namespace) {
 		return ((this.elementName == null || 
 						this.elementName.equals(elementName)) && 
 				(this.namespace == null || 
 						this.namespace.equals(namespace)));
+	}
+	
+	/**
+	 * Validate whether packet correspond to this type of packet.
+	 * 
+	 * @param packet
+	 * @return True if corresponds
+	 */
+	public boolean equals(Packet packet) {
+		return equals(packet.getElementName(), packet.getNamespace());
 	}
 	
 	/**
@@ -66,7 +82,7 @@ public class Provider {
 	 * @return
 	 * 			Modified packet
 	 */
-	protected Packet parseComplited(Manager manager, Packet packet) {
+	protected Packet parseComplited(Packet packet) {
 		return packet;
 	}
 	
@@ -88,6 +104,9 @@ public class Provider {
 				packet.addPacket(parseInner(manager, packet));
 		}
 		packet.setPayload(buffer.toString());
-		return parseComplited(manager, packet);
+		packet = parseComplited(packet);
+		if (makeEvent)
+			manager.event(packet);
+		return packet;
 	}
 }

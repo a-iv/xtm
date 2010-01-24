@@ -74,7 +74,7 @@ public class Manager extends Thread {
 		System.out.println(elementName + ":" + namespace);
 		for (Enumeration e = providers.elements(); e.hasMoreElements();) {
 			Provider provider = (Provider) e.nextElement();
-			if (provider.validate(elementName, namespace)) {
+			if (provider.equals(elementName, namespace)) {
 				return provider.parse(this);
 			}
 		}
@@ -90,10 +90,10 @@ public class Manager extends Thread {
 	 * @param provider
 	 * @param packet
 	 */
-	public void event(Provider provider, Packet packet) {
+	public void event(Packet packet) {
 		for (Enumeration e = listeners.elements(); e.hasMoreElements();) {
 			XmppListener xl = (XmppListener) e.nextElement();
-			xl.onEvent(provider, packet);
+			xl.onEvent(packet);
 		}
 	}
 

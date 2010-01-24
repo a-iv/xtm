@@ -8,14 +8,14 @@ import net.sourceforge.jxa.packet.Packet;
 
 public class MessageProvider extends Provider {
 	public MessageProvider() {
-		super("message", null);
+		super("message", null, true);
 	}
 
 	protected Packet createPacket() {
 		return new Message();
 	}
 	
-	protected Packet parseComplited(Manager manager, Packet packet) {
+	protected Packet parseComplited(Packet packet) {
 		Message message = (Message) packet;
 		message.from = packet.getProperty("from");
 		for (Enumeration e = packet.getPackets(); e.hasMoreElements();) {
@@ -25,7 +25,6 @@ public class MessageProvider extends Provider {
 			if (found.getElementName().equals("subject"))
 				message.subject = found.getPayload();
 		}
-		manager.event(this, message);
 		return message;
 	}
 }

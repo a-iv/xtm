@@ -16,6 +16,7 @@
 
 package net.sourceforge.jxa;
 
+import net.sourceforge.jxa.packet.Packet;
 import net.sourceforge.jxa.provider.Provider;
 
 import org.jabber.task.Task;
@@ -127,7 +128,5 @@ public interface XmppListener {
 	 */
 	public void onUnsubscribeEvent(final String jid);
 
-	public void onTaskEvent(Task task);
-
-	public void onEvent(Provider provider, Object object);
+	public void onEvent(Packet packet);
 };
