@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.Vector;
 
 import net.sourceforge.jxa.Manager;
-import net.sourceforge.jxa.packet.Bind;
 import net.sourceforge.jxa.packet.IQ;
 import net.sourceforge.jxa.packet.Packet;
 

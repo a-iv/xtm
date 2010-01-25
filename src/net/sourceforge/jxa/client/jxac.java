@@ -189,9 +189,9 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 			jxa.unsubscribe(subscribe_field.getString());
 			Display.getDisplay(this).setCurrent(contacts_list);
 		} else if (cmd == create_cmd) {
-			jxa.createNode("gpsgeotrace.com", "jxa");
+			jxa.pubsubCreateNode("gpsgeotrace.com", "jxa1");
 		} else if (cmd == list_cmd) {
-			jxa.getItems("gpsgeotrace.com", "jxa");
+			jxa.pubsubAllItems("gpsgeotrace.com", "jxa1");
 		} else if (cmd == List.SELECT_COMMAND) {
 			whom = (String) jid_list.elementAt(contacts_list
 					.getSelectedIndex());
@@ -279,10 +279,10 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 			msg_alert.setTimeout(Alert.FOREVER);
 			Display.getDisplay(this).setCurrent(msg_alert);
 		} else if (packet.equals("subscription", null)) {
-			String node = packet.getElementName("node");
-			String jid = packet.getElementName("jid");
-			String subid = packet.getElementName("subid");
-			String subscription = packet.getElementName("subscription");
+			String node = packet.getProperty("node");
+			String jid = packet.getProperty("jid");
+			String subid = packet.getProperty("subid");
+			String subscription = packet.getProperty("subscription");
 			System.out.println(jid + " subscribed to " + node + " as " + subscription + " #" + subid);
 		}
 	}

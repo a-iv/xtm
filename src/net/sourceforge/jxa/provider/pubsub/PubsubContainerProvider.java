@@ -1,27 +1,28 @@
 package net.sourceforge.jxa.provider.pubsub;
 
-import net.sourceforge.jxa.Manager;
-import net.sourceforge.jxa.packet.IQ;
-import net.sourceforge.jxa.packet.Packet;
-import net.sourceforge.jxa.packet.pubsub.Enumeration;
-import net.sourceforge.jxa.packet.pubsub.PubsubItems;
-import net.sourceforge.jxa.packet.pubsub.PubsubNode;
-import net.sourceforge.jxa.provider.BindProvider;
-import net.sourceforge.jxa.provider.IOException;
-import net.sourceforge.jxa.provider.Provider;
-import net.sourceforge.jxa.provider.String;
-import net.sourceforge.jxa.provider.Vector;
+import java.io.IOException;
+import java.util.Vector;
 
-public class PubsubNodeProvider extends Provider {
+import net.sourceforge.jxa.Manager;
+import net.sourceforge.jxa.packet.Packet;
+import net.sourceforge.jxa.packet.pubsub.PubsubContainer;
+import net.sourceforge.jxa.provider.Provider;
+
+public class PubsubContainerProvider extends Provider {
 	private static final Provider itemProvider = new PubsubItemProvider();
 	private static final Provider retractProvider = new PubsubRetractProvider();
+	private static final Provider subscriptionProvider = new PubsubSubscriptionProvider();
+
+	public PubsubContainerProvider(String elementName, String namespace, boolean makeEvent) {
+		super(elementName, namespace, makeEvent);
+	}
 
 	protected Packet createPacket() {
-		return new PubsubNode();
+		return new PubsubContainer();
 	}
 	
 	protected Packet parseComplited(Packet packet) {
-		PubsubNode node = (PubsubNode) packet;
+		PubsubContainer node = (PubsubContainer) packet;
 		node.jid = packet.getProperty("jid");
 		node.node = packet.getProperty("node");
 		return node;
@@ -31,6 +32,7 @@ public class PubsubNodeProvider extends Provider {
 		Vector providers = new Vector();
 		providers.addElement(itemProvider);
 		providers.addElement(retractProvider);
+		providers.addElement(subscriptionProvider);
 		return manager.parse(providers.elements(), true);
 	}
 }

@@ -1,7 +1,6 @@
 package net.sourceforge.jxa.provider.pubsub;
 
 import net.sourceforge.jxa.packet.Packet;
-import net.sourceforge.jxa.packet.pubsub.PubsubItem;
 import net.sourceforge.jxa.packet.pubsub.PubsubRetract;
 import net.sourceforge.jxa.provider.Provider;
 

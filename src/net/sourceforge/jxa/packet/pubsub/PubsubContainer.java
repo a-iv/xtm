@@ -1,10 +1,29 @@
 package net.sourceforge.jxa.packet.pubsub;
 
+import java.io.IOException;
+import java.util.Enumeration;
+import java.util.Vector;
+
+import net.sourceforge.jxa.Manager;
 import net.sourceforge.jxa.packet.Packet;
 
-public class PubsubNode extends Packet {
+public class PubsubContainer extends Packet {
 	public String node;
 	public String jid;
+
+	public PubsubContainer() {
+		super();
+	}
+
+	public PubsubContainer(String elementName, String namespace) {
+		super(elementName, namespace);
+	}
+
+	public PubsubContainer(String elementName, String namespace, String node, String jid) {
+		this(elementName, namespace);
+		this.node = node;
+		this.jid = jid;
+	}
 
 	public void emit(Manager manager) throws IOException {
 		setProperty("node", node);

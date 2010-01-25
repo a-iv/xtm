@@ -2,7 +2,6 @@ package net.sourceforge.jxa.provider;
 
 import java.util.Enumeration;
 
-import net.sourceforge.jxa.packet.IQ;
 import net.sourceforge.jxa.packet.Message;
 import net.sourceforge.jxa.packet.Packet;
 

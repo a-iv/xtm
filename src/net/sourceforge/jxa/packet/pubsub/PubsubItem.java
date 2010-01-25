@@ -1,10 +1,13 @@
 package net.sourceforge.jxa.packet.pubsub;
 
+import java.io.IOException;
+
 import net.sourceforge.jxa.Manager;
 import net.sourceforge.jxa.packet.Packet;
 
 public class PubsubItem extends Packet {
 	public String id;
+	public String node;
 	public String publisher;
 	
 	public static final String ELEMENT_NAME = "item";

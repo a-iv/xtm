@@ -1,6 +1,7 @@
 package net.sourceforge.jxa.packet.pubsub;
 
-import net.sourceforge.jxa.Manager;
+import java.util.Enumeration;
+
 import net.sourceforge.jxa.packet.Packet;
 
 public class PubsubEvent extends Packet {
@@ -25,7 +26,7 @@ public class PubsubEvent extends Packet {
 		for (Enumeration e = getPackets(); e.hasMoreElements();) {
 			Packet found = (Packet) e.nextElement();
 			if (found.equals("items", null))
-				return ((PubsubItems) found).getItems();
+				return ((PubsubContainer) found).getItems();
 		}
 		return null;
 	}

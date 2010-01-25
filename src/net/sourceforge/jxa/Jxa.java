@@ -29,8 +29,7 @@ import net.sourceforge.jxa.packet.Roster;
 import net.sourceforge.jxa.packet.RosterItem;
 import net.sourceforge.jxa.packet.pubsub.Pubsub;
 import net.sourceforge.jxa.packet.pubsub.PubsubItem;
-import net.sourceforge.jxa.packet.pubsub.PubsubItems;
-import net.sourceforge.jxa.packet.pubsub.PubsubOptions;
+import net.sourceforge.jxa.packet.pubsub.PubsubContainer;
 import net.sourceforge.jxa.packet.pubsub.PubsubPublish;
 import net.sourceforge.jxa.provider.IQProvider;
 import net.sourceforge.jxa.provider.MessageProvider;
@@ -422,22 +421,27 @@ public class Jxa extends Manager {
 		Data data = new Data("submit");
 		data.addPacket(new DataField("FORM_TYPE", "hidden", "http://jabber.org/protocol/pubsub#subscribe_options"));
 		data.addPacket(new DataField("pubsub#include_body", null, include_body ? "true" : "false"));
-		IQ iq = new IQ("set", server, getID(), new Pubsub(new PubsubOptions(node, myjid, data)));
+
+		Packet options = new Packet("options", null, data);
+		options.setProperty("node", node);
+		options.setProperty("jid", myjid);
+		
+		IQ iq = new IQ("set", server, getID(), new Pubsub(options));
 		sendPacket(iq);
 	}
 	
 	public void pubsubAllItems(String server, String node) {
-		IQ iq = new IQ("get", server, getID(), new Pubsub(new PubsubItems(node, null, null)));
+		IQ iq = new IQ("get", server, getID(), new Pubsub(new PubsubContainer("items", null, null, node)));
 		sendPacket(iq);
 	}
 	
 	public void pubsubPublish(String server, String node, String id, Packet packet) {
-		Packet publish = new PubsubPublish(node, new PubsubItem(id, null, packet));
+		Packet publish = new PubsubPublish(node, null, new PubsubItem(id, packet));
 		IQ iq = new IQ("set", server, getID(), new Pubsub(publish));
 		sendPacket(iq);
 	}
 	
-	public void createNode(String server, String node) {
+	public void pubsubCreateNode(String server, String node) {
 		Packet create = new Packet("create", null);
 		create.setProperty("node", node);
 		

@@ -2,7 +2,7 @@ package net.sourceforge.jxa.packet.pubsub;
 
 import net.sourceforge.jxa.packet.Packet;
 
-public class PubsubPublish extends PubsubNode {
+public class PubsubPublish extends PubsubContainer {
 	public static final String ELEMENT_NAME = "publish";
 	public static final String NAMESPACE = null;
 	

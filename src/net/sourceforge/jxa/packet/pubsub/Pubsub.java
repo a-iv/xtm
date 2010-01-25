@@ -26,7 +26,7 @@ public class Pubsub extends Packet {
 		for (Enumeration e = getPackets(); e.hasMoreElements();) {
 			Packet found = (Packet) e.nextElement();
 			if (found.equals("items", null))
-				return ((PubsubItems) found).getItems();
+				return ((PubsubContainer) found).getItems();
 		}
 		return null;
 	}
