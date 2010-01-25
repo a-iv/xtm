@@ -9,9 +9,9 @@ import net.sourceforge.jxa.packet.pubsub.PubsubEvent;
 import net.sourceforge.jxa.provider.Provider;
 
 public class PubsubEventProvider extends Provider {
+	private static final Provider deleteProvider = new PubsubDeleteProvider();
+	private static final Provider itemsProvider = new PubsubItemsProvider();
 	private static final Provider subscriptionProvider = new PubsubSubscriptionProvider();
-
-	private static final Provider itemsProvider = new PubsubItemProvider();
 	
 	public PubsubEventProvider() {
 		super(PubsubEvent.ELEMENT_NAME, PubsubEvent.NAMESPACE, false);
@@ -23,8 +23,9 @@ public class PubsubEventProvider extends Provider {
 	
 	protected Packet parseInner(Manager manager, Packet packet) throws IOException {
 		Vector providers = new Vector();
-		providers.addElement(subscriptionProvider);
+		providers.addElement(deleteProvider);
 		providers.addElement(itemsProvider);
+		providers.addElement(subscriptionProvider);
 		return manager.parse(providers.elements(), true);
 	}
 

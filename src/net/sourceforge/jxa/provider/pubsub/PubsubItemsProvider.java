@@ -5,25 +5,23 @@ import java.util.Vector;
 
 import net.sourceforge.jxa.Manager;
 import net.sourceforge.jxa.packet.Packet;
-import net.sourceforge.jxa.packet.pubsub.PubsubContainer;
+import net.sourceforge.jxa.packet.pubsub.PubsubItems;
 import net.sourceforge.jxa.provider.Provider;
 
-public class PubsubContainerProvider extends Provider {
+public class PubsubItemsProvider extends Provider {
 	private static final Provider itemProvider = new PubsubItemProvider();
 	private static final Provider retractProvider = new PubsubRetractProvider();
-	private static final Provider subscriptionProvider = new PubsubSubscriptionProvider();
 
-	public PubsubContainerProvider(String elementName, String namespace, boolean makeEvent) {
-		super(elementName, namespace, makeEvent);
+	public PubsubItemsProvider() {
+		super(PubsubItems.ELEMENT_NAME, PubsubItems.NAMESPACE, false);
 	}
 
 	protected Packet createPacket() {
-		return new PubsubContainer();
+		return new PubsubItems();
 	}
 	
 	protected Packet parseComplited(Packet packet) {
-		PubsubContainer node = (PubsubContainer) packet;
-		node.jid = packet.getProperty("jid");
+		PubsubItems node = (PubsubItems) packet;
 		node.node = packet.getProperty("node");
 		return node;
 	}
@@ -32,7 +30,6 @@ public class PubsubContainerProvider extends Provider {
 		Vector providers = new Vector();
 		providers.addElement(itemProvider);
 		providers.addElement(retractProvider);
-		providers.addElement(subscriptionProvider);
 		return manager.parse(providers.elements(), true);
 	}
 }

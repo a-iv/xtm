@@ -25,6 +25,7 @@ public class PubsubItem extends Packet {
 
 	public void emit(Manager manager) throws IOException {
 		setProperty("id", id);
+		setProperty("node", node);
 		setProperty("publisher", publisher);
 		super.emit(manager);
 	}

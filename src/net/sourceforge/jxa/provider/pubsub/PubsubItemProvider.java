@@ -16,6 +16,7 @@ public class PubsubItemProvider extends Provider {
 	protected Packet parseComplited(Packet packet) {
 		PubsubItem item = (PubsubItem) packet;
 		item.id = packet.getProperty("id");
+		item.node = packet.getProperty("node");
 		item.publisher = packet.getProperty("publisher");
 		return item;
 	}

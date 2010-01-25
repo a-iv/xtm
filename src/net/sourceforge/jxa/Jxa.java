@@ -29,7 +29,7 @@ import net.sourceforge.jxa.packet.Roster;
 import net.sourceforge.jxa.packet.RosterItem;
 import net.sourceforge.jxa.packet.pubsub.Pubsub;
 import net.sourceforge.jxa.packet.pubsub.PubsubItem;
-import net.sourceforge.jxa.packet.pubsub.PubsubContainer;
+import net.sourceforge.jxa.packet.pubsub.PubsubItems;
 import net.sourceforge.jxa.packet.pubsub.PubsubPublish;
 import net.sourceforge.jxa.provider.IQProvider;
 import net.sourceforge.jxa.provider.MessageProvider;
@@ -431,7 +431,7 @@ public class Jxa extends Manager {
 	}
 	
 	public void pubsubAllItems(String server, String node) {
-		IQ iq = new IQ("get", server, getID(), new Pubsub(new PubsubContainer("items", null, null, node)));
+		IQ iq = new IQ("get", server, getID(), new Pubsub(new PubsubItems("items", null, null, node)));
 		sendPacket(iq);
 	}
 	

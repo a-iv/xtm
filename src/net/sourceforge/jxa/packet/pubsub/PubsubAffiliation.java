@@ -9,7 +9,7 @@ public class PubsubAffiliation extends Packet {
 	public String jid;
 	public String affiliation;
 	
-	public static final String ELEMENT_NAME = "subscription";
+	public static final String ELEMENT_NAME = "affiliation";
 	public static final String NAMESPACE = null;
 	
 	public PubsubAffiliation() {
