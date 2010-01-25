@@ -2,12 +2,13 @@ package net.sourceforge.jxa.provider;
 
 import java.util.Enumeration;
 
+import net.sourceforge.jxa.packet.IQ;
 import net.sourceforge.jxa.packet.Message;
 import net.sourceforge.jxa.packet.Packet;
 
 public class MessageProvider extends Provider {
 	public MessageProvider() {
-		super("message", null, true);
+		super(Message.ELEMENT_NAME, Message.NAMESPACE, true);
 	}
 
 	protected Packet createPacket() {

@@ -11,7 +11,7 @@ public class BindProvider extends Provider {
 	private static final Provider jidProvider = new Provider("jid", null, false);
 	
 	public BindProvider() {
-		super("bind", "urn:ietf:params:xml:ns:xmpp-bind", true);
+		super(Bind.ELEMENT_NAME, Bind.NAMESPACE, true);
 	}
 	
 	protected Packet createPacket() {

@@ -10,8 +10,11 @@ public class IQ extends Packet {
 	public String to;
 	public String id;
 
+	public static final String ELEMENT_NAME = "iq";
+	public static final String NAMESPACE = null;
+	
 	public IQ() {
-		super("iq", null);
+		super(ELEMENT_NAME, NAMESPACE);
 	}
 
 	public IQ(String type, String to, String id, Packet inner) {

@@ -3,8 +3,11 @@ package net.sourceforge.jxa.packet;
 import java.util.Enumeration;
 
 public class Bind extends Packet {
+	public static final String ELEMENT_NAME = "bind";
+	public static final String NAMESPACE = "urn:ietf:params:xml:ns:xmpp-bind";
+	
 	public Bind() {
-		super("bind", "urn:ietf:params:xml:ns:xmpp-bind");
+		super(ELEMENT_NAME, NAMESPACE);
 	}
 
 	public Bind(String resource) {

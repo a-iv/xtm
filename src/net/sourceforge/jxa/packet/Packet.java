@@ -187,7 +187,8 @@ public class Packet {
 	 * @param packet to be added
 	 */
 	public void addPacket(Packet packet) {
-		packets.addElement(packet);
+		if (packet != null)
+			packets.addElement(packet);
 	}
 	
 	/**

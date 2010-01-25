@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Vector;
 
 import net.sourceforge.jxa.Manager;
+import net.sourceforge.jxa.packet.Bind;
 import net.sourceforge.jxa.packet.IQ;
 import net.sourceforge.jxa.packet.Packet;
 
@@ -12,7 +13,7 @@ public class IQProvider extends Provider {
 	private static final Provider bindProvider = new BindProvider();
 	
 	public IQProvider() {
-		super("iq", null, false);
+		super(IQ.ELEMENT_NAME, IQ.NAMESPACE, false);
 	}
 
 	protected Packet createPacket() {

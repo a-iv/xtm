@@ -8,8 +8,11 @@ public class DataField extends Packet {
 	public String var;
 	public String type;
 	
+	public static final String ELEMENT_NAME = "field";
+	public static final String NAMESPACE = null;
+	
 	public DataField() {
-		super("field", null);
+		super(ELEMENT_NAME, NAMESPACE);
 	}
 	
 	public DataField(String var, String type, Packet inner) {

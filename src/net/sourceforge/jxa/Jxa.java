@@ -25,10 +25,13 @@ import net.sourceforge.jxa.packet.IQ;
 import net.sourceforge.jxa.packet.Message;
 import net.sourceforge.jxa.packet.Packet;
 import net.sourceforge.jxa.packet.Presence;
-import net.sourceforge.jxa.packet.Pubsub;
-import net.sourceforge.jxa.packet.PubsubItems;
 import net.sourceforge.jxa.packet.Roster;
 import net.sourceforge.jxa.packet.RosterItem;
+import net.sourceforge.jxa.packet.pubsub.Pubsub;
+import net.sourceforge.jxa.packet.pubsub.PubsubItem;
+import net.sourceforge.jxa.packet.pubsub.PubsubItems;
+import net.sourceforge.jxa.packet.pubsub.PubsubOptions;
+import net.sourceforge.jxa.packet.pubsub.PubsubPublish;
 import net.sourceforge.jxa.provider.IQProvider;
 import net.sourceforge.jxa.provider.MessageProvider;
 import net.sourceforge.jxa.provider.PresenceProvider;
@@ -396,8 +399,41 @@ public class Jxa extends Manager {
 		sendPacket(iq);
 	}
 	
-	public void getItems(String server, String node) {
-		IQ iq = new IQ("get", server, getID(), new Pubsub(new PubsubItems(node)));
+	/*************************************************
+	 * 					PUBSUB						 *
+	 *************************************************/
+	public void pubsubSubscribe(String server, String node) {
+		Packet subscribe = new Packet("subscribe");
+		subscribe.setProperty("node", node);
+		subscribe.setProperty("jid", myjid);
+		IQ iq = new IQ("set", server, getID(), new Pubsub(subscribe));
+		sendPacket(iq);
+	}
+	
+	public void pubsubUnsubscribe(String server, String node) {
+		Packet subscribe = new Packet("unsubscribe");
+		subscribe.setProperty("node", node);
+		subscribe.setProperty("jid", myjid);
+		IQ iq = new IQ("set", server, getID(), new Pubsub(subscribe));
+		sendPacket(iq);
+	}
+	
+	public void pubsubOptions(String server, String node, boolean include_body) {
+		Data data = new Data("submit");
+		data.addPacket(new DataField("FORM_TYPE", "hidden", "http://jabber.org/protocol/pubsub#subscribe_options"));
+		data.addPacket(new DataField("pubsub#include_body", null, include_body ? "true" : "false"));
+		IQ iq = new IQ("set", server, getID(), new Pubsub(new PubsubOptions(node, myjid, data)));
+		sendPacket(iq);
+	}
+	
+	public void pubsubAllItems(String server, String node) {
+		IQ iq = new IQ("get", server, getID(), new Pubsub(new PubsubItems(node, null, null)));
+		sendPacket(iq);
+	}
+	
+	public void pubsubPublish(String server, String node, String id, Packet packet) {
+		Packet publish = new PubsubPublish(node, new PubsubItem(id, null, packet));
+		IQ iq = new IQ("set", server, getID(), new Pubsub(publish));
 		sendPacket(iq);
 	}
 	
@@ -408,6 +444,11 @@ public class Jxa extends Manager {
 		Data data = new Data("submit");
 		data.addPacket(new DataField("FORM_TYPE", "hidden", "http://jabber.org/protocol/pubsub#node_config"));
 		data.addPacket(new DataField("pubsub#access_model", null, "open"));
+		data.addPacket(new DataField("pubsub#max_payload_size", null, "65536"));
+		data.addPacket(new DataField("pubsub#persist_items", null, "1"));
+		data.addPacket(new DataField("pubsub#deliver_payloads", null, "1"));
+		data.addPacket(new DataField("pubsub#deliver_notifications", null, "1"));
+		data.addPacket(new DataField("pubsub#max_items", null, "-1"));
 		
 		Pubsub pubsub = new Pubsub();
 		pubsub.addPacket(create);

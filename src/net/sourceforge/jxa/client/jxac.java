@@ -278,6 +278,12 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 			msg_alert = new Alert("Task " + task.sender, task.description, null, AlertType.INFO);
 			msg_alert.setTimeout(Alert.FOREVER);
 			Display.getDisplay(this).setCurrent(msg_alert);
+		} else if (packet.equals("subscription", null)) {
+			String node = packet.getElementName("node");
+			String jid = packet.getElementName("jid");
+			String subid = packet.getElementName("subid");
+			String subscription = packet.getElementName("subscription");
+			System.out.println(jid + " subscribed to " + node + " as " + subscription + " #" + subid);
 		}
 	}
 }

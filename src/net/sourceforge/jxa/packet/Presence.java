@@ -12,8 +12,11 @@ public class Presence extends Packet {
 	public String status = new String("");
 	public int priority;
 	
+	public static final String ELEMENT_NAME = "presence";
+	public static final String NAMESPACE = null;
+	
 	public Presence() {
-		super("presence", null);
+		super(ELEMENT_NAME, NAMESPACE);
 	}
 	
 	public Presence(String to, String type, String show, String status, int priority) {

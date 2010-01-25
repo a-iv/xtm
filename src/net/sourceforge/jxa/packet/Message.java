@@ -10,8 +10,11 @@ public class Message extends Packet {
 	public String body;
 	public String subject;
 	
+	public static final String ELEMENT_NAME = "message";
+	public static final String NAMESPACE = null;
+	
 	public Message() {
-		super("message", null);
+		super(ELEMENT_NAME, NAMESPACE);
 	}
 
 	public void emit(Manager manager) throws IOException {
