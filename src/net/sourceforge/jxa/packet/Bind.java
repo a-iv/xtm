@@ -6,7 +6,14 @@ public class Bind extends Packet {
 	public Bind() {
 		super("bind", "urn:ietf:params:xml:ns:xmpp-bind");
 	}
-	
+
+	public Bind(String resource) {
+		this();
+		if (resource != null)
+			addPacket(new Packet("resource", null, resource));
+			
+	}
+
 	/**
 	 * Gets full JID value
 	 * 

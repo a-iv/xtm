@@ -22,7 +22,6 @@ public class IQProvider extends Provider {
 	protected Packet parseInner(Manager manager, Packet packet) throws IOException {
 		String type = packet.getProperty("type");
 		String id = packet.getProperty("id");
-		System.out.println(type + "," + id);
 		if (type.equals("error")) {
 			Vector providers = new Vector();
 			providers.addElement(errorProvider);

@@ -79,8 +79,6 @@ public interface XmppListener {
 	public void onContactEvent(final String jid, final String name,
 			final String group, final String subscription);
 
-	public void onContactOverEvent();
-
 	/**
 	 * <p>
 	 * This event occurs when a presence message comes from jabber server. This

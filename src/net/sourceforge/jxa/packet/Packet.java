@@ -14,23 +14,29 @@ public class Packet {
 	private Vector packets;
 	
 	public Packet() {
-		this(new String(), null, null);
+		this(new String(), null);
 	}
 	
 	public Packet(String elementName) {
-		this(elementName, null, null);
+		this(elementName, null);
 	}
 	
 	public Packet(String elementName, String namespace) {
-		this(elementName, namespace, null);
-	}
-	
-	public Packet(String elementName, String namespace, String payload) {
 		this.elementName = elementName;
-		this.payload = payload;
+		payload = null;
 		properties = new Hashtable();
 		packets = new Vector();
 		setNamespace(namespace);
+	}
+	
+	public Packet(String elementName, String namespace, String payload) {
+		this(elementName, namespace);
+		this.payload = payload;
+	}
+	
+	public Packet(String elementName, String namespace, Packet inner) {
+		this(elementName, namespace);
+		addPacket(inner);
 	}
 	
 	/**

@@ -19,10 +19,14 @@ package net.sourceforge.jxa;
 import javax.microedition.io.*;
 
 import net.sourceforge.jxa.packet.Bind;
+import net.sourceforge.jxa.packet.Data;
+import net.sourceforge.jxa.packet.DataField;
 import net.sourceforge.jxa.packet.IQ;
 import net.sourceforge.jxa.packet.Message;
 import net.sourceforge.jxa.packet.Packet;
 import net.sourceforge.jxa.packet.Presence;
+import net.sourceforge.jxa.packet.Pubsub;
+import net.sourceforge.jxa.packet.PubsubItems;
 import net.sourceforge.jxa.packet.Roster;
 import net.sourceforge.jxa.packet.RosterItem;
 import net.sourceforge.jxa.provider.IQProvider;
@@ -173,107 +177,62 @@ public class Jxa extends Manager {
 	 *             IOException.
 	 */
 	public void login() throws IOException {
-		if (!use_ssl) {
-			// start stream
-			this.writer.startTag("stream:stream");
-			this.writer.attribute("to", this.host);
-			this.writer.attribute("xmlns", "jabber:client");
-			this.writer.attribute("xmlns:stream",
-					"http://etherx.jabber.org/streams");
-			this.writer.flush();
-			// log in
-			this.writer.startTag("iq");
-			this.writer.attribute("type", "set");
-			this.writer.attribute("id", "auth");
-			this.writer.startTag("query");
-			this.writer.attribute("xmlns", "jabber:iq:auth");
-
-			this.writer.startTag("username");
-			this.writer.text(this.username);
-			this.writer.endTag();
-			this.writer.startTag("password");
-			this.writer.text(this.password);
-			this.writer.endTag();
-			this.writer.startTag("resource");
-			this.writer.text(this.resource);
-			this.writer.endTag();
-
-			this.writer.endTag(); // query
-			this.writer.endTag(); // iq
-			this.writer.flush();
-		} else {
-			String msg = "<stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' to='"
-					+ this.host + "' version='1.0'>";
-			os.write(msg.getBytes());
-			os.flush();
-			do {
-				reader.next();
-			} while ((reader.getType() != XmlReader.END_TAG)
-					|| (!reader.getName().equals("stream:features")));
-
-			java.lang.System.out.println("SASL phase1");
-			/*
-			 * for (Enumeration enu = listeners.elements();
-			 * enu.hasMoreElements();) { XmppListener xl = (XmppListener)
-			 * enu.nextElement(); xl.onDebug("SASL phase 1"); }
-			 */
-
-			// int ghost = is.available();
-			// is.skip(ghost);
-
-			msg = "<auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl' mechanism='PLAIN'>";
-			byte[] auth_msg = (username + "@" + host + "\0" + username + "\0" + password)
-					.getBytes();
-			msg = msg + Base64.encode(auth_msg) + "</auth>";
-			os.write(msg.getBytes());
-			os.flush();
+		writer.startTag("stream:stream");
+		writer.attribute("xmlns", "jabber:client");
+		writer.attribute("xmlns:stream", "http://etherx.jabber.org/streams");
+		writer.attribute("to", host);
+		writer.attribute("version", "1.0");
+		writer.flush();
+		do {
 			reader.next();
-			if (reader.getName().equals("success")) {
-				while (true) {
-					if ((reader.getType() == XmlReader.END_TAG)
-							&& reader.getName().equals("success"))
-						break;
-					reader.next();
-				}
-			} else {
-				for (Enumeration e = listeners.elements(); e.hasMoreElements();) {
-					XmppListener xl = (XmppListener) e.nextElement();
-					xl.onAuthFailed(reader.getName()
-							+ ", failed authentication");
-				}
-				return;
-			}
-			java.lang.System.out.println("SASL phase2");
-			/*
-			 * for (Enumeration enu = listeners.elements();
-			 * enu.hasMoreElements();) { XmppListener xl = (XmppListener)
-			 * enu.nextElement(); xl.onDebug("SASL phase 2"); }
-			 */
-			msg = "<stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' to='"
-					+ this.host + "' version='1.0'>";
-			os.write(msg.getBytes());
-			os.flush();
-			reader.next();
+		} while ((reader.getType() != XmlReader.END_TAG)
+				|| (!reader.getName().equals("stream:features")));
+
+		System.out.println("SASL phase1");
+		
+		Packet auth = new Packet("auth", "urn:ietf:params:xml:ns:xmpp-sasl");
+		auth.setProperty("mechanism", "PLAIN");
+		byte[] auth_msg = (username + "@" + host + "\0" + username + "\0" + password)
+				.getBytes();
+		auth.setPayload(Base64.encode(auth_msg));
+		sendPacket(auth);
+
+		reader.next();
+		if (reader.getName().equals("success")) {
 			while (true) {
 				if ((reader.getType() == XmlReader.END_TAG)
-						&& reader.getName().equals("stream:features"))
+						&& reader.getName().equals("success"))
 					break;
 				reader.next();
 			}
-			java.lang.System.out.println("SASL done");
-			/*
-			 * for (Enumeration enu = listeners.elements();
-			 * enu.hasMoreElements();) { XmppListener xl = (XmppListener)
-			 * enu.nextElement(); xl.onDebug("SASL done"); }
-			 */
-			if (resource == null)
-				msg = "<iq type='set' id='res_binding'><bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'/></iq>";
-			else
-				msg = "<iq type='set' id='res_binding'><bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'><resource>"
-						+ resource + "</resource></bind></iq>";
-			os.write(msg.getBytes());
-			os.flush();
+		} else {
+			for (Enumeration e = listeners.elements(); e.hasMoreElements();) {
+				XmppListener xl = (XmppListener) e.nextElement();
+				xl.onAuthFailed(reader.getName()
+						+ ", failed authentication");
+			}
+			return;
 		}
+
+		System.out.println("SASL phase2");
+
+		writer.startTag("stream:stream");
+		writer.attribute("xmlns", "jabber:client");
+		writer.attribute("xmlns:stream", "http://etherx.jabber.org/streams");
+		writer.attribute("to", host);
+		writer.attribute("version", "1.0");
+		writer.flush();
+		reader.next();
+		while (true) {
+			if ((reader.getType() == XmlReader.END_TAG)
+					&& reader.getName().equals("stream:features"))
+				break;
+			reader.next();
+		}
+		System.out.println("SASL done");
+
+		IQ iq = new IQ("set", null, "res_binding", new Bind(resource));
+		sendPacket(iq);
 	}
 
 	/**
@@ -418,6 +377,12 @@ public class Jxa extends Manager {
 			this.connectionFailed();
 		}
 	}
+	
+	private int ID = 0;
+	private String getID() {
+		ID = ID + 1;
+		return String.valueOf(ID); 
+	}
 
 	/**
 	 * Sends a roster query.
@@ -427,11 +392,10 @@ public class Jxa extends Manager {
 	 *             IOException.
 	 */
 	public void getRoster() {
-		IQ iq = new IQ(null, "get", "roster");
-		iq.addPacket(new Roster());
+		IQ iq = new IQ("get", null, getID(), new Roster());
 		sendPacket(iq);
 	}
-
+	
 	/**
 	 * The main parse methode is parsing all types of XML stanzas
 	 * <code>message</code>, <code>presence</code> and <code>iq</code>. Although
@@ -442,8 +406,6 @@ public class Jxa extends Manager {
 	 *             IOException.
 	 */
 	private void parse() throws IOException {
-		if (!use_ssl)
-			this.reader.next(); // start tag
 		while (this.reader.next() == XmlReader.START_TAG)
 			parse(true);
 		this.reader.close();
@@ -478,7 +440,6 @@ public class Jxa extends Manager {
 		System.out.println("JXA event: " + packet);
 		for (Enumeration e = listeners.elements(); e.hasMoreElements();) {
 			XmppListener xl = (XmppListener) e.nextElement();
-			System.out.println(packet.getElementName());
 			if (packet.equals("message", null)) {
 				Message message = (Message) packet;
 				if (message.body != null) {
@@ -488,8 +449,7 @@ public class Jxa extends Manager {
 					continue;
 				}
 			} else if (packet.equals("error", null)) {
-				// TODO: Why?
-				xl.onAuthFailed(packet.getProperty("code") + ": " + packet.getPayload());
+				System.out.println("Error: " + packet.getPayload());
 			} else if (packet.equals("bind", "urn:ietf:params:xml:ns:xmpp-bind")) {
 				Bind bind = (Bind) packet;
 				xl.onAuth(bind.getResource());
@@ -523,22 +483,13 @@ public class Jxa extends Manager {
 		if (packet.equals("bind", "urn:ietf:params:xml:ns:xmpp-bind")) {
 			sendPresence(null, null, null, null, this.priority);
 		} else if (packet.equals("query", "jabber:iq:version")) {
-			IQ iq = new IQ();
-			iq.type = "result";
-			iq.id = packet.getProperty("id");
-			iq.to = packet.getProperty("from");
-			
 			Packet query = new Packet("query", "jabber:iq:version");
 			query.addPacket(new Packet("name", null, "mja"));
 			query.addPacket(new Packet("version", null, "1.0"));
 			query.addPacket(new Packet("os", null, "J2ME"));
 			
-			iq.addPacket(query);
-			try {
-				iq.emit(this);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			IQ iq = new IQ("result", packet.getProperty("from"), packet.getProperty("id"), query);
+			sendPacket(iq);
 		}
 	}
 }

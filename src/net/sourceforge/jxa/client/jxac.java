@@ -51,6 +51,8 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 	private Command unsubscribe_cmd;
 	private Command rename_cmd;
 	private Command update_cmd;
+	private Command create_cmd;
+	private Command list_cmd;
 	private Image offline_img;
 	private Image online_img;
 	private String whom;
@@ -117,9 +119,6 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 		}
 	}
 
-	public void onContactOverEvent() {
-	}
-
 	public void onStatusEvent(final String jid, final String show,
 			final String status) {
 		System.out.println(":" + jid + " " + show + " " + status);
@@ -152,7 +151,7 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 			String passwd = passwd_field.getString();
 			String server = server_field.getString();
 			Display.getDisplay(this).setCurrent(contacts_list);
-			jxa = new Jxa(id, passwd, "jxac", 10, server, "5223", true);
+			jxa = new Jxa(id, passwd, "jxac", 10, server, "5222", false);
 			jxa.addListener(this);
 			jxa.addProvider(taskProvider);
 			jxa.start();
@@ -189,6 +188,10 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 		} else if (cmd == unsubscribe_cmd) {
 			jxa.unsubscribe(subscribe_field.getString());
 			Display.getDisplay(this).setCurrent(contacts_list);
+		} else if (cmd == create_cmd) {
+			//jxa.createNode("gpsgeotrace.com", "jxa");
+		} else if (cmd == list_cmd) {
+			//jxa.getItems("gpsgeotrace.com", "jxa");
 		} else if (cmd == List.SELECT_COMMAND) {
 			whom = (String) jid_list.elementAt(contacts_list
 					.getSelectedIndex());
@@ -205,11 +208,11 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 		jid_list = new Vector();
 		
 		login_form = new Form("login");
-		id_field = new TextField("JID(xxx@xxx.xxx)", "aiv.tst@gmail.com", 30, TextField.ANY);
+		id_field = new TextField("JID(xxx@xxx.xxx)", "aiv.tst@gpsgeotrace.com", 30, TextField.ANY);
 		login_form.append(id_field);
 		passwd_field = new TextField("password", "qwe12345", 15, TextField.PASSWORD);
 		login_form.append(passwd_field);
-		server_field = new TextField("server", "talk.google.com", 20,
+		server_field = new TextField("server", "gpsgeotrace.com", 20,
 				TextField.ANY);
 		login_form.append(server_field);
 		exit_cmd = new Command("Exit", Command.EXIT, 0);
@@ -222,8 +225,12 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 		//contacts_list.addCommand(exit_cmd);
 		contact_cmd = new Command("Contact", Command.OK, 0);
 		rename_cmd = new Command("Rename", Command.ITEM, 1);
+		create_cmd = new Command("Create pubsub", Command.ITEM, 2);
+		list_cmd = new Command("List pubsub", Command.ITEM, 3);
 		contacts_list.addCommand(contact_cmd);
 		contacts_list.addCommand(rename_cmd);
+		contacts_list.addCommand(create_cmd);
+		contacts_list.addCommand(list_cmd);
 		contacts_list.setCommandListener(this);
 
 		send_box = new TextBox(null, null, 50, TextField.ANY);

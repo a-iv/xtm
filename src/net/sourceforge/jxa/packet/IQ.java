@@ -14,11 +14,12 @@ public class IQ extends Packet {
 		super("iq", null);
 	}
 
-	public IQ(String to, String type, String id) {
+	public IQ(String type, String to, String id, Packet inner) {
 		this();
-		this.id = id;
-		this.to = to;
 		this.type = type;
+		this.to = to;
+		this.id = id;
+		addPacket(inner);
 	}
 
 	public void emit(Manager manager) throws IOException {
