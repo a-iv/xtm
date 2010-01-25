@@ -396,6 +396,27 @@ public class Jxa extends Manager {
 		sendPacket(iq);
 	}
 	
+	public void getItems(String server, String node) {
+		IQ iq = new IQ("get", server, getID(), new Pubsub(new PubsubItems(node)));
+		sendPacket(iq);
+	}
+	
+	public void createNode(String server, String node) {
+		Packet create = new Packet("create", null);
+		create.setProperty("node", node);
+		
+		Data data = new Data("submit");
+		data.addPacket(new DataField("FORM_TYPE", "hidden", "http://jabber.org/protocol/pubsub#node_config"));
+		data.addPacket(new DataField("pubsub#access_model", null, "open"));
+		
+		Pubsub pubsub = new Pubsub();
+		pubsub.addPacket(create);
+		pubsub.addPacket(new Packet("configure", null, data));
+
+		IQ iq = new IQ("set", server, getID(), pubsub);
+		sendPacket(iq);
+	}
+
 	/**
 	 * The main parse methode is parsing all types of XML stanzas
 	 * <code>message</code>, <code>presence</code> and <code>iq</code>. Although

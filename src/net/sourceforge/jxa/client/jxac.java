@@ -189,9 +189,9 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 			jxa.unsubscribe(subscribe_field.getString());
 			Display.getDisplay(this).setCurrent(contacts_list);
 		} else if (cmd == create_cmd) {
-			//jxa.createNode("gpsgeotrace.com", "jxa");
+			jxa.createNode("gpsgeotrace.com", "jxa");
 		} else if (cmd == list_cmd) {
-			//jxa.getItems("gpsgeotrace.com", "jxa");
+			jxa.getItems("gpsgeotrace.com", "jxa");
 		} else if (cmd == List.SELECT_COMMAND) {
 			whom = (String) jid_list.elementAt(contacts_list
 					.getSelectedIndex());
