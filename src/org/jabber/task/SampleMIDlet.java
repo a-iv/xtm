@@ -55,7 +55,7 @@ public class SampleMIDlet extends MIDlet implements CommandListener, XmppListene
 	Display display;
 	Form login = new Form("Введите пароль");
 	List main;
-	List chat = new List("", Choice.IMPLICIT);
+	List taskList = new List("", Choice.IMPLICIT);
 	List formContacts;
 	Form contactinfo = new Form("инфо о контакте");
 	Form ychet = new Form("Учетная запись");
@@ -113,6 +113,7 @@ public class SampleMIDlet extends MIDlet implements CommandListener, XmppListene
 
 	Vector contacts = new Vector();
 	Vector tasks = new Vector();
+	Vector comments = new Vector();
 /*	
 	Task[] tasks = new Task[200];
 	int tasksCount = 4;
@@ -126,21 +127,18 @@ public class SampleMIDlet extends MIDlet implements CommandListener, XmppListene
 	}
 
 */
-	Comment[] comments = new Comment[2500];
-	int commentsCount = 0;
-
 	String thisUserJID = new String();
 	String thisContactJID = new String();
 	int thisTaskID;
 
-	String[] printedContactIDs = new String[200];
+	Vector printedContactIDs = new Vector();
 
 	void printContacts() {
 		formContacts.deleteAll();
-		int k = 0;
 		for (int i = 0; i < contacts.size(); i++) {
 			Contact contact = (Contact) contacts.elementAt(i); 
 			System.out.println(contact.name);
+			printedContactIDs.addElement(contact.jid);
 			formContacts.append(contact.name, null);
 			}
 	}
@@ -174,13 +172,13 @@ public class SampleMIDlet extends MIDlet implements CommandListener, XmppListene
 		deleteContact(id);
 	}
 
-	int[] printedTaskIDs = new int[200];
+	Vector printedTaskIDs = new Vector();
 
 	void onCreateTask(int id, String theme, String description) {
-		tasks[tasksCount] = new Task(id, thisUserJID, thisContactJID, theme,
+		Task task = new Task(id, thisUserJID, thisContactJID, theme,
 				description, 0);
-		tasksCount = tasksCount + 1;
-	}
+		tasks.addElement(task);
+		}
 
 	void createTask(int id, String theme, String description) {
 		onCreateTask(id, theme, description);
@@ -188,11 +186,12 @@ public class SampleMIDlet extends MIDlet implements CommandListener, XmppListene
 	}
 
 	void onUpdateTask(int id, String theme, String description, int fulfill) {
-		for (int i = 0; i < tasksCount; i++) {
-			if (id == tasks[i].id) {
-				tasks[i].theme = theme;
-				tasks[i].description = description;
-				tasks[i].fulfilment = fulfill;
+		for (int i = 0; i < tasks.size(); i++) {
+			Task task = (Task) tasks.elementAt(i);
+			if (id == task.id) {
+				task.theme = theme;
+				task.description = description;
+				task.fulfilment = fulfill;
 				printTasks(true, true);
 			}
 		}
@@ -203,22 +202,26 @@ public class SampleMIDlet extends MIDlet implements CommandListener, XmppListene
 	}
 
 	void printTasks(boolean compleated, boolean notCompleated) {
-		display.setCurrent(chat);
-		chat.deleteAll();
+		display.setCurrent(taskList);
+		taskList.deleteAll();
 		int k = 0;
-		for (int i = 0; i < tasksCount; i = i + 1) {
-			if ((tasks[i].owner == thisUserJID && tasks[i].sender == thisContactJID)
-					|| (tasks[i].owner == thisContactJID && tasks[i].sender == thisUserJID)) {
-				if (tasks[i].fulfilment == 10) {
+		System.out.println("Tasks: " + tasks.size());
+		System.out.println(thisUserJID + ":" + thisContactJID);
+		for (int i = 0; i < tasks.size(); i = i + 1) {
+			Task task = (Task) tasks.elementAt(i);
+			System.out.println(task.owner + ":" + task.sender);
+			if ((task.owner.equals(thisUserJID) && task.sender.equals(thisContactJID))
+					|| (task.owner.equals(thisContactJID) && task.sender.equals(thisUserJID))) {
+				if (task.fulfilment == 10) {
 					if (compleated) {
-						chat.append("☺ " + tasks[i].theme, null);
-						printedTaskIDs[k] = tasks[i].id;
+						taskList.append("☺ " + task.theme, null);
+						printedTaskIDs.addElement(new Integer(task.id));
 						k = k + 1;
 					}
 				} else {
 					if (notCompleated) {
-						chat.append(tasks[i].theme, null);
-						printedTaskIDs[k] = tasks[i].id;
+						taskList.append(task.theme, null);
+						printedTaskIDs.addElement(new Integer(task.id));
 						k = k + 1;
 					}
 				}
@@ -227,41 +230,51 @@ public class SampleMIDlet extends MIDlet implements CommandListener, XmppListene
 	}
 
 	void onDeleteTask() {
-		int id = printedTaskIDs[chat.getSelectedIndex()];
+		int id = ((Integer) printedTaskIDs.elementAt(taskList.getSelectedIndex())).intValue();
 		int index = 0;
-		for (int i = 0; i < tasksCount; i = i + 1) {
-			if (tasks[i].id == id) {
+		for (int i = 0; i < tasks.size(); i = i + 1) {
+			Task task = (Task) tasks.elementAt(i);
+			if (task.id == id) {
 				index = i;
 			}
 		}
-		for (int i = index; i < tasksCount; i = i + 1) {
-			tasks[i] = tasks[i + 1];
-		}
-		tasksCount = tasksCount - 1;
+		tasks.removeElementAt(index);
+		printTasks(true,true);
 	}
 
 	void deleteTask(int id) {
 		int k = 0;
-		for (int i = 0; i < tasksCount; i++) {
-			if (id == tasks[i].id) {
+		for (int i = 0; i < tasks.size(); i++) {
+			Task task = (Task) tasks.elementAt(i);
+			if (id == task.id) {
 				k = i;
 			}
 		}
-		for (int i = k; i < tasksCount; i++) {
-			tasks[i] = tasks[i + 1];
-		}
-		tasksCount = tasksCount - 1;
+		tasks.removeElementAt(k);
+		printTasks(true,true);
 	}
-
+	
+	int getTaskByID(){
+		int id = ((Integer) printedTaskIDs.elementAt(taskList.getSelectedIndex())).intValue();
+		int index;
+		for (int i=0 ; i < tasks.size(); i++){
+			Task task = (Task) tasks.elementAt(i);
+			if (task.id == id){
+				index = i;
+				return index;
+			}
+		}
+	return -1;
+	}
+	
 	void printComments() {
 		thisTask.deleteAll();
 		thisTask.append(gauge);
 		gauge.setPreferredSize(200, 50);
 		display.setCurrent(thisTask);
-		int id = printedTaskIDs[chat.getSelectedIndex()];
-		Task task = getTaskByID(id);
+		Task task = (Task) tasks.elementAt(getTaskByID());
 		gauge.setValue(task.fulfilment);
-		if (tasks[thisTaskID].sender == thisUserJID) {
+		if (task.sender == thisUserJID) {
 			thisTask.append(topic2);
 			topic2.setString(task.theme);
 			thisTask.append(descript2);
@@ -272,19 +285,17 @@ public class SampleMIDlet extends MIDlet implements CommandListener, XmppListene
 			thisTask.append(task.description + "\n");
 		}
 		thisTask.append("Комментарии:" + "\n");
-		for (int i = 0; i < commentsCount; i = i + 1) {
-			if (comments[i].task == task.id) {
-				thisTask.append(comments[i].text + "\n");
+		for (int i = 0; i < comments.size(); i = i + 1) {
+			Comment comment = (Comment) comments.elementAt(i);
+			if (comment.task == task.id) {
+				thisTask.append(comment.text + "\n");
 			}
 		}
 	}
 
 	void createComment(String text, int task) {
-		comments[commentsCount] = new Comment();
-		comments[commentsCount].task = task;
-		comments[commentsCount].text = text;
-		commentsCount = commentsCount + 1;
-	}
+		comments.addElement(new Comment(task, text));
+		}
 
 	void onCreateComment(String text, int task) {
 		createComment(text, task);
@@ -324,10 +335,11 @@ public class SampleMIDlet extends MIDlet implements CommandListener, XmppListene
 		contact.name = "3";
 		contact.group = "cc";
 		contacts.addElement(contact);
-		tasks[0] = new Task(0, "1a", "2b", "1aTo2B", "from1a", 0);
-		tasks[1] = new Task(1, "2b", "1a", "2bTo1a", "from2b", 4);
-		tasks[2] = new Task(2, "3c", "1a", "3cTo1a", "from3c", 6);
-		tasks[3] = new Task(3, "4d", "2b", "4dTo2b", "from4d", 10);
+		tasks.addElement(new Task(0, "1a", "2b", "1aTo2B", "from1a", 0));
+		tasks.addElement(new Task(1, "2b", "1a", "2bTo1a", "from2b", 4));
+		tasks.addElement(new Task(2, "3c", "1a", "3cTo1a", "from3c", 6));
+		tasks.addElement(new Task(3, "4d", "2b", "4dTo2b", "from4d", 10));
+	
 
 		// экран ввода пароля
 		login.addCommand(exit);
@@ -347,12 +359,12 @@ public class SampleMIDlet extends MIDlet implements CommandListener, XmppListene
 		main.addCommand(select);
 
 		// форма чат
-		chat.setCommandListener(this);
-		chat.addCommand(back);
-		chat.addCommand(select);
-		chat.addCommand(newTask);
-		chat.addCommand(deleteThisTask);
-		chat.addCommand(cSort);
+		taskList.setCommandListener(this);
+		taskList.addCommand(back);
+		taskList.addCommand(select);
+		taskList.addCommand(newTask);
+		taskList.addCommand(deleteThisTask);
+		taskList.addCommand(cSort);
 
 		sort = new List("Сортировка", Choice.IMPLICIT);
 		sort.setCommandListener(this);
@@ -490,14 +502,15 @@ public class SampleMIDlet extends MIDlet implements CommandListener, XmppListene
 		if (display.getCurrent() == login) {
 			// Форма входа
 			if (c == select) {
+				thisUserJID = userJID.getString();
 			setRecordText(1, userJID.getString().getBytes());
 			setRecordText(2, pass.getString().getBytes());
 			setRecordText(3, serv.getString().getBytes());
-			//display.setCurrent(connection);
-			display.setCurrent(main);
-/*					jxa = new Jxa(thisUserJID, pw, "mobile", 10, server, "5223", true);
+			display.setCurrent(connection);
+			//display.setCurrent(main);
+					jxa = new Jxa(thisUserJID, pass.getString(), "mobile", 10, serv.getString(), "5223", true);
 					jxa.addListener(this);
-					jxa.start();*/
+					jxa.start();
 				} else if (c == exit) {
 				destroyApp(true);
 			}
@@ -526,7 +539,7 @@ public class SampleMIDlet extends MIDlet implements CommandListener, XmppListene
 					break;
 				}
 			}
-		} else if (display.getCurrent() == chat) {
+		} else if (display.getCurrent() == taskList) {
 			// форма чат
 			if (c == back) {
 				display.setCurrent(formContacts);
@@ -539,10 +552,10 @@ public class SampleMIDlet extends MIDlet implements CommandListener, XmppListene
 			} else if (c == cSort) {
 				display.setCurrent(sort);
 			} else {
-				int qq = chat.getSelectedIndex();
-				thisTaskID = printedTaskIDs[qq];
+				int qq = taskList.getSelectedIndex();
+				thisTaskID = ((Integer) printedTaskIDs.elementAt(qq)).intValue();
 				String topictask = new String();
-				topictask = chat.getString(qq);
+				topictask = taskList.getString(qq);
 				display.setCurrent(thisTask);
 				printComments();
 				thisTask.setTitle(topictask);
@@ -559,30 +572,27 @@ public class SampleMIDlet extends MIDlet implements CommandListener, XmppListene
 				contactinfo.append("Имя:  " + ((Contact) contacts.elementAt(a)).name);
 				contactinfo.append("Должность:  " + ((Contact) contacts.elementAt(a)).group);
 				} else if (c == open) {
-				thisContactJID = printedContactIDs[formContacts
-						.getSelectedIndex()];
+				thisContactJID = (String) printedContactIDs.elementAt(formContacts.getSelectedIndex());
 				String contname = formContacts.getString(formContacts
 						.getSelectedIndex());
-				chat.setTitle(contname);
-				display.setCurrent(chat);
+				taskList.setTitle(contname);
+				display.setCurrent(taskList);
 				printTasks(true, true);
 			} else if (c == newc) {
 				display.setCurrent(newContactSet);
 				newContactJID.setString("");
 			} else if (c == deletec) {
-				deleteContact(printedContactIDs[formContacts.getSelectedIndex()]);
+				deleteContact((String) printedContactIDs.elementAt(formContacts.getSelectedIndex()));
 			} else if (c == newTask) {
-				thisContactJID = printedContactIDs[formContacts
-						.getSelectedIndex()];
+				thisContactJID = (String) printedContactIDs.elementAt(formContacts.getSelectedIndex());
 				display.setCurrent(formTask);
 				topic.setString("");
 			} else {
-				thisContactJID = printedContactIDs[formContacts
-						.getSelectedIndex()];
+				thisContactJID = (String) printedContactIDs.elementAt(formContacts.getSelectedIndex());
 				String contname = formContacts.getString(formContacts
 						.getSelectedIndex());
-				chat.setTitle(contname);
-				display.setCurrent(chat);
+				taskList.setTitle(contname);
+				display.setCurrent(taskList);
 				printTasks(true, true);
 			}
 		} else if (display.getCurrent() == newContactSet) {
@@ -651,23 +661,24 @@ public class SampleMIDlet extends MIDlet implements CommandListener, XmppListene
 		 * ychet2.append("Заполните учетную запись полностью!"); } }
 		 */else if (display.getCurrent() == formTask) {
 			if (c == cancel) {
-				display.setCurrent(chat);
+				display.setCurrent(taskList);
 			} else if (c == ok && !topic.equals("")) {
 				String strTopic = topic.getString();
 				String strDescript = descript.getString();
-				onCreateTask(tasksCount, strTopic, strDescript);
-				display.setCurrent(chat);
+				onCreateTask(tasks.size(), strTopic, strDescript);
+				display.setCurrent(taskList);
 				printTasks(true, true);
 			}
 		} else if (display.getCurrent() == thisTask) {
 			if (c == back) {
 				int i;
-				for (i = 0; i < tasksCount; i = i + 1) {
-					if (tasks[i].id == thisTaskID) {
-						tasks[i].fulfilment = gauge.getValue();
+				for (i = 0; i < tasks.size(); i = i + 1) {
+					Task task = (Task) tasks.elementAt(i);
+					if (task.id == thisTaskID) {
+						task.fulfilment = gauge.getValue();
 					}
 				}
-				display.setCurrent(chat);
+				display.setCurrent(taskList);
 				printTasks(true, true);
 			} else if (c == message) {
 				display.setCurrent(messagedisplay);
@@ -677,19 +688,19 @@ public class SampleMIDlet extends MIDlet implements CommandListener, XmppListene
 			}
 		} else if (display.getCurrent() == sort) {
 			if (c == back) {
-				display.setCurrent(chat);
+				display.setCurrent(taskList);
 			} else {
 				switch (sort.getSelectedIndex()) {
 				case 0:
-					display.setCurrent(chat);
+					display.setCurrent(taskList);
 					printTasks(true, false);
 					break;
 				case 1:
-					display.setCurrent(chat);
+					display.setCurrent(taskList);
 					printTasks(false, true);
 					break;
 				case 2:
-					display.setCurrent(chat);
+					display.setCurrent(taskList);
 					printTasks(true, true);
 					break;
 				}
@@ -719,18 +730,21 @@ public class SampleMIDlet extends MIDlet implements CommandListener, XmppListene
 
 	public void onAuthFailed(String message) {
 		// TODO Auto-generated method stub
-		System.out.println("Авторизация не удалась");
+		System.out.println("Auth failed");
 	}
 
 	public void onConnFailed(String msg) {
 		// TODO Auto-generated method stub
-		System.out.println("Подключение не удалось");
+		System.out.println("Connection failed");
 	}
 
-	public void onContactEvent(final String jid, String name,final String group,
+	public void onContactEvent(final String jid, String name, final String group,
 			final String subscription) {
 		if (subscription.equals("both"))
-			formContacts.append(name, offlineImg);
+			if (name == null)
+				formContacts.append(jid, offlineImg);
+			else
+				formContacts.append(name, offlineImg);
 			Contact contact = new Contact();
 			contact.jid = jid;
 			contact.name =name;
@@ -767,3 +781,9 @@ public class SampleMIDlet extends MIDlet implements CommandListener, XmppListene
 		jxa.unsubscribe(jid);
 	}
 }
+
+/*
+aiv.tst@gmail.com
+qwe12345
+talk.google.com
+*/
