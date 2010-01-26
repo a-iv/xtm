@@ -69,7 +69,8 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 	private Vector jid_list;
 	private TaskProvider taskProvider = new TaskProvider(); 
 	private String pubsubServer = "pubsub.gpsgeotrace.com";
-	private String pubsubNode = "jxa1";
+	private String pubsubNode = "jxac";
+	private String subid;
 
 
 	private Image loadImage(String name) {
@@ -149,7 +150,7 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 	public void onSubscribeEvent(final String jid) {
 		System.out.println("Subscribe from " + jid);
 		jxa.subscribe(jid);
-		jxa.saveContact(jid, null, null, null);
+		//jxa.saveContact(jid, null, null, "subscribe");
 	}
 
 	public void onUnsubscribeEvent(final String jid) {
@@ -197,6 +198,7 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 			Display.getDisplay(this).setCurrent(contacts_list);
 		} else if (cmd == subscribe_cmd) {
 			jxa.subscribe(subscribe_field.getString());
+			//jxa.saveContact(subscribe_field.getString(), null, null, "subscribe");
 			Display.getDisplay(this).setCurrent(contacts_list);
 		} else if (cmd == unsubscribe_cmd) {
 			jxa.unsubscribe(subscribe_field.getString());
@@ -204,7 +206,7 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 		} else if (cmd == create_cmd) {
 			jxa.pubsubCreateNode(pubsubServer, pubsubNode);
 		} else if (cmd == list_cmd) {
-			jxa.pubsubAllItems(pubsubServer, pubsubNode);
+			jxa.pubsubAllItems(pubsubServer, pubsubNode, subid);
 		} else if (cmd == sub_cmd) {
 			jxa.pubsubSubscribe(pubsubServer, pubsubNode);
 		} else if (cmd == allsub_cmd) {
@@ -212,7 +214,7 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 		} else if (cmd == allaff_cmd) {
 			jxa.pubsubAllAffiliations(pubsubServer, pubsubNode);
 		} else if (cmd == setaff_cmd) {
-			jxa.pubsubSetAffiliation(pubsubServer, pubsubNode, "aiv.tst2@gpsgeotrace.com", "publisher");
+			jxa.pubsubSetAffiliation(pubsubServer, pubsubNode, "aiv.tst3@gpsgeotrace.com", "publisher");
 		} else if (cmd == List.SELECT_COMMAND) {
 			whom = (String) jid_list.elementAt(contacts_list
 					.getSelectedIndex());
@@ -311,6 +313,8 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 		} else if (packet.equals("subscription", null)) {
 			PubsubSubscription subscription = (PubsubSubscription) packet;
 			System.out.println(subscription.jid + " subscribed to " + subscription.node + " as " + subscription.subscription + " #" + subscription.subid);
+			if (subscription.jid.equals(jxa.myjid) && subscription.node.equals(pubsubNode))
+				subid = subscription.subid;
 		} else if (packet.equals("affiliation", null)) {
 			PubsubAffiliation affiliation = (PubsubAffiliation) packet;
 			System.out.println(affiliation.jid + " is " + affiliation.affiliation);

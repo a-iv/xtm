@@ -441,8 +441,10 @@ public class Jxa extends Manager {
 		sendPacket(iq);
 	}
 	
-	public void pubsubAllItems(String server, String node) {
-		IQ iq = new IQ("get", server, getID(), new Pubsub(new PubsubItems(node, null)));
+	public void pubsubAllItems(String server, String node, String subid) {
+		Packet items = new PubsubItems(node, null);
+		items.setProperty("subid", subid);
+		IQ iq = new IQ("get", server, getID(), new Pubsub(items));
 		sendPacket(iq);
 	}
 	
