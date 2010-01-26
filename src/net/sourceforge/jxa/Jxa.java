@@ -59,14 +59,14 @@ public class Jxa extends Manager {
 
 	final static boolean DEBUG = true;
 
-	public final String host, port, username, password, myjid, server;
+	public final String host, port, username, password, myjid, server, pubsubServer;
 	private final boolean use_ssl;
 	private String resource;
 	private final int priority;
 
 	private InputStream is;
 	private OutputStream os;
-
+	
 	/**
 	 * If you create this object all variables will be saved and the method
 	 * {@link #run()} is started to log in on jabber server and listen to parse
@@ -99,7 +99,7 @@ public class Jxa extends Manager {
 	// to login Google Talk, set port to 5223 (NOT 5222 in their offical guide)
 	public Jxa(final String jid, final String password, final String resource,
 			final int priority, final String server, final String port,
-			final boolean use_ssl) {
+			final boolean use_ssl, final String pubsubServer) {
 		int i = jid.indexOf('@');
 		this.host = jid.substring(i + 1);
 		this.port = port;
@@ -113,6 +113,7 @@ public class Jxa extends Manager {
 		else
 			this.server = server;
 		this.use_ssl = use_ssl;
+		this.pubsubServer = pubsubServer;
 		addProvider(new MessageProvider());
 		addProvider(new IQProvider());
 		addProvider(new PresenceProvider());
@@ -391,7 +392,7 @@ public class Jxa extends Manager {
 	
 	private static Random random = new Random();
 	private static final String Symbols = "0123456789abcdefghijklmnopqrstuvwxyz";
-	private String getID() {
+	public String getID() {
 		StringBuffer buffer = new StringBuffer(32);
 		for (int i = 0; i < 32; i ++)
 			buffer.append(Symbols.charAt(random.nextInt(Symbols.length())));
@@ -413,23 +414,23 @@ public class Jxa extends Manager {
 	/*************************************************
 	 * 					PUBSUB						 *
 	 *************************************************/
-	public void pubsubSubscribe(String server, String node) {
+	public void pubsubSubscribe(String node) {
 		Packet subscribe = new Packet("subscribe");
 		subscribe.setProperty("node", node);
 		subscribe.setProperty("jid", myjid);
-		IQ iq = new IQ("set", server, getID(), new Pubsub(subscribe));
+		IQ iq = new IQ("set", pubsubServer, getID(), new Pubsub(subscribe));
 		sendPacket(iq);
 	}
 	
-	public void pubsubUnsubscribe(String server, String node) {
+	public void pubsubUnsubscribe(String node) {
 		Packet subscribe = new Packet("unsubscribe");
 		subscribe.setProperty("node", node);
 		subscribe.setProperty("jid", myjid);
-		IQ iq = new IQ("set", server, getID(), new Pubsub(subscribe));
+		IQ iq = new IQ("set", pubsubServer, getID(), new Pubsub(subscribe));
 		sendPacket(iq);
 	}
 	
-	public void pubsubOptions(String server, String node, boolean include_body) {
+	public void pubsubOptions(String node, boolean include_body) {
 		Data data = new Data("submit");
 		data.addPacket(new DataField("FORM_TYPE", "hidden", "http://jabber.org/protocol/pubsub#subscribe_options"));
 		data.addPacket(new DataField("pubsub#include_body", null, include_body ? "true" : "false"));
@@ -438,56 +439,57 @@ public class Jxa extends Manager {
 		options.setProperty("node", node);
 		options.setProperty("jid", myjid);
 		
-		IQ iq = new IQ("set", server, getID(), new Pubsub(options));
+		IQ iq = new IQ("set", pubsubServer, getID(), new Pubsub(options));
 		sendPacket(iq);
 	}
 	
-	public void pubsubAllItems(String server, String node, String subid) {
+	public void pubsubAllItems(String node, String subid) {
 		Packet items = new PubsubItems(node, null);
 		items.setProperty("subid", subid);
-		IQ iq = new IQ("get", server, getID(), new Pubsub(items));
+		IQ iq = new IQ("get", pubsubServer, getID(), new Pubsub(items));
 		sendPacket(iq);
 	}
 	
-	public void pubsubPublish(String server, String node, String id, Packet packet) {
+	public void pubsubPublish(String node, String id, Packet packet) {
 		if (id == null)
 			id = getID();
 		Packet publish = new PubsubPublish(node, new PubsubItem(id, packet));
-		IQ iq = new IQ("set", server, getID(), new Pubsub(publish));
+		IQ iq = new IQ("set", pubsubServer, getID(), new Pubsub(publish));
 		sendPacket(iq);
 	}
 	
-	public void pubsubRetract(String server, String node, String id) {
-		IQ iq = new IQ("set", server, getID(), new Pubsub(new PubsubRetract(id)));
+	public void pubsubRetract(String node, String id) {
+		Packet retract = new PubsubRetract(node, new PubsubItem(id, null));
+		IQ iq = new IQ("set", pubsubServer, getID(), new Pubsub(retract));
 		sendPacket(iq);
 	}
 	
-	public void pubsubAllSubscriptions(String server, String node) {
+	public void pubsubAllSubscriptions(String node) {
 		Packet packet = new Packet("subscriptions", null);
 		packet.setProperty("node", node);
-		IQ iq = new IQ("get", server, getID(), new Pubsub(packet));
+		IQ iq = new IQ("get", pubsubServer, getID(), new Pubsub(packet));
 		sendPacket(iq);
 	}
 	
-	public void pubsubSetSubscription(String server, String node, String jid, String subscription) {
+	public void pubsubSetSubscription(String node, String jid, String subscription) {
 		Packet packet = new Packet("subscriptions", null);
 		packet.setProperty("node", node);
 		packet.addPacket(new PubsubSubscription(jid, subscription));
-		IQ iq = new IQ("set", server, getID(), new Pubsub(packet));
+		IQ iq = new IQ("set", pubsubServer, getID(), new Pubsub(packet));
 		sendPacket(iq);
 	}
 	
-	public void pubsubAllAffiliations(String server, String node) {
-		IQ iq = new IQ("get", server, getID(), new Pubsub(new PubsubAffiliations(node, null)));
+	public void pubsubAllAffiliations(String node) {
+		IQ iq = new IQ("get", pubsubServer, getID(), new Pubsub(new PubsubAffiliations(node, null)));
 		sendPacket(iq);
 	}
 	
-	public void pubsubSetAffiliation(String server, String node, String jid, String affiliation) {
-		IQ iq = new IQ("set", server, getID(), new PubsubOwner(new PubsubAffiliations(node, new PubsubAffiliation(jid, affiliation))));
+	public void pubsubSetAffiliation(String node, String jid, String affiliation) {
+		IQ iq = new IQ("set", pubsubServer, getID(), new PubsubOwner(new PubsubAffiliations(node, new PubsubAffiliation(jid, affiliation))));
 		sendPacket(iq);
 	}
 	
-	public void pubsubCreateNode(String server, String node) {
+	public void pubsubCreateNode(String node) {
 		Packet create = new Packet("create", null);
 		create.setProperty("node", node);
 		
@@ -505,7 +507,7 @@ public class Jxa extends Manager {
 		pubsub.addPacket(create);
 		pubsub.addPacket(new Packet("configure", null, data));
 
-		IQ iq = new IQ("set", server, getID(), pubsub);
+		IQ iq = new IQ("set", pubsubServer, getID(), pubsub);
 		sendPacket(iq);
 	}
 

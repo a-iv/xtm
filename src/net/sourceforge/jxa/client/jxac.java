@@ -17,7 +17,6 @@ package net.sourceforge.jxa.client;
  */
 
 import net.sourceforge.jxa.*;
-import net.sourceforge.jxa.packet.Message;
 import net.sourceforge.jxa.packet.Packet;
 import net.sourceforge.jxa.packet.pubsub.PubsubAffiliation;
 import net.sourceforge.jxa.packet.pubsub.PubsubItem;
@@ -164,7 +163,7 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 			String passwd = passwd_field.getString();
 			String server = server_field.getString();
 			Display.getDisplay(this).setCurrent(contacts_list);
-			jxa = new Jxa(id, passwd, "jxac", 10, server, "5222", false);
+			jxa = new Jxa(id, passwd, "jxac", 10, server, "5222", false, pubsubServer);
 			jxa.addListener(this);
 			jxa.addProvider(taskProvider);
 			jxa.start();
@@ -177,7 +176,7 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 //			message.to = whom;
 //			message.addPacket(task);
 //			jxa.sendPacket(message);
-			jxa.pubsubPublish(pubsubServer, pubsubNode, null, task);
+			jxa.pubsubPublish(pubsubNode, null, task);
 			Display.getDisplay(this).setCurrent(contacts_list);
 		} else if (cmd == contact_cmd) {
 			Display.getDisplay(this).setCurrent(subscribe_form);
@@ -204,17 +203,17 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 			jxa.unsubscribe(subscribe_field.getString());
 			Display.getDisplay(this).setCurrent(contacts_list);
 		} else if (cmd == create_cmd) {
-			jxa.pubsubCreateNode(pubsubServer, pubsubNode);
+			jxa.pubsubCreateNode(pubsubNode);
 		} else if (cmd == list_cmd) {
-			jxa.pubsubAllItems(pubsubServer, pubsubNode, subid);
+			jxa.pubsubAllItems(pubsubNode, subid);
 		} else if (cmd == sub_cmd) {
-			jxa.pubsubSubscribe(pubsubServer, pubsubNode);
+			jxa.pubsubSubscribe(pubsubNode);
 		} else if (cmd == allsub_cmd) {
-			jxa.pubsubAllSubscriptions(pubsubServer, pubsubNode);
+			jxa.pubsubAllSubscriptions(pubsubNode);
 		} else if (cmd == allaff_cmd) {
-			jxa.pubsubAllAffiliations(pubsubServer, pubsubNode);
+			jxa.pubsubAllAffiliations(pubsubNode);
 		} else if (cmd == setaff_cmd) {
-			jxa.pubsubSetAffiliation(pubsubServer, pubsubNode, "aiv.tst3@gpsgeotrace.com", "publisher");
+			jxa.pubsubSetAffiliation(pubsubNode, "aiv.tst3@gpsgeotrace.com", "publisher");
 		} else if (cmd == List.SELECT_COMMAND) {
 			whom = (String) jid_list.elementAt(contacts_list
 					.getSelectedIndex());

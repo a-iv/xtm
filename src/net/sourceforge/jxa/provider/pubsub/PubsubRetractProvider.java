@@ -16,6 +16,7 @@ public class PubsubRetractProvider extends Provider {
 	protected Packet parseComplited(Packet packet) {
 		PubsubRetract retract = (PubsubRetract) packet;
 		retract.id = packet.getProperty("id");
+		retract.node = packet.getProperty("node");
 		return retract;
 	}
 }
