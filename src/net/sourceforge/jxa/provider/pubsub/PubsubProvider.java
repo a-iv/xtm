@@ -12,6 +12,8 @@ public class PubsubProvider extends Provider {
 	private static final Provider affilitionsProvider = new PubsubAffiliationsProvider();
 	private static final Provider itemsProvider = new PubsubItemsProvider();
 	private static final Provider publishProvider = new PubsubPublishProvider();
+	private static final Provider subscriptionProvider = new PubsubSubscriptionProvider();
+	private static final Provider subscriptionsProvider = new PubsubSubscriptionsProvider();
 	
 	public PubsubProvider() {
 		super(Pubsub.ELEMENT_NAME, Pubsub.NAMESPACE, false);
@@ -26,6 +28,8 @@ public class PubsubProvider extends Provider {
 		providers.addElement(affilitionsProvider);
 		providers.addElement(itemsProvider);
 		providers.addElement(publishProvider);
+		providers.addElement(subscriptionProvider);
+		providers.addElement(subscriptionsProvider);
 		return manager.parse(providers.elements(), true);
 	}
 }

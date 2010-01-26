@@ -5,29 +5,29 @@ import java.util.Vector;
 
 import net.sourceforge.jxa.Manager;
 import net.sourceforge.jxa.packet.Packet;
-import net.sourceforge.jxa.packet.pubsub.PubsubAffiliations;
+import net.sourceforge.jxa.packet.pubsub.PubsubSubscriptions;
 import net.sourceforge.jxa.provider.Provider;
 
-public class PubsubAffiliationsProvider extends Provider {
-	private static final Provider affiliationProvider = new PubsubAffiliationProvider();
+public class PubsubSubscriptionsProvider extends Provider {
+	private static final Provider subscriptionProvider = new PubsubSubscriptionProvider();
 
-	public PubsubAffiliationsProvider() {
-		super(PubsubAffiliations.ELEMENT_NAME, PubsubAffiliations.NAMESPACE, false);
+	public PubsubSubscriptionsProvider() {
+		super(PubsubSubscriptions.ELEMENT_NAME, PubsubSubscriptions.NAMESPACE, false);
 	}
 
 	protected Packet createPacket() {
-		return new PubsubAffiliations();
+		return new PubsubSubscriptions();
 	}
 	
 	protected Packet parseComplited(Packet packet) {
-		PubsubAffiliations node = (PubsubAffiliations) packet;
+		PubsubSubscriptions node = (PubsubSubscriptions) packet;
 		node.node = packet.getProperty("node");
 		return node;
 	}
 
 	protected Packet parseInner(Manager manager, Packet packet) throws IOException {
 		Vector providers = new Vector();
-		providers.addElement(affiliationProvider);
+		providers.addElement(subscriptionProvider);
 		return manager.parse(providers.elements(), true);
 	}
 }
