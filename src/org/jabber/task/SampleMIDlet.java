@@ -13,35 +13,6 @@ import javax.microedition.rms.RecordStore;
 import javax.microedition.rms.RecordStoreException;
 import javax.microedition.rms.RecordStoreFullException;
 import javax.microedition.rms.RecordStoreNotOpenException;
-
-/*
- RecordStore zapis = null;
- //1 строка - имя
- //2 строка - дата рождения
- //3 строка - работа
- //4 строка - пароль
-
- try {
- zapis = RecordStore.openRecordStore( "", false );
- }
- catch( RecordStoreNotFoundException e ){
- // не существует
- }
- catch( RecordStoreException e ){
- // какие-то другие ошибки
- }
-
- try {
- zapis.closeRecordStore();
- }
- catch( RecordStoreNotOpenException e ){
- // уже закрыта
- }
- catch( RecordStoreException e ){
- // какие-то другие ошибки
- }
-
- */
 import javax.microedition.rms.RecordStoreNotFoundException;
 
 import net.sourceforge.jxa.Jxa;
@@ -75,7 +46,6 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 	Jxa jxa;
 	Image offlineImg;
 	Image onlineImg;
-	// private Roster roster = new Roster();
 
 	TextField pass = new TextField("Введите пароль", "", 20, TextField.PASSWORD);
 	TextField password = new TextField("Пароль", "", 20, TextField.PASSWORD);
@@ -96,7 +66,6 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 	TextField regroup = new TextField("Группа:  ", "" , 128, 0);
 
 	Gauge gauge = new Gauge("Выполнено", true, 10, 0);
-	// gauge.getValue()
 
 	Command select = new Command("Выбрать", Command.ITEM, 0);
 	Command back = new Command("Назад", Command.BACK, 1);
@@ -122,12 +91,7 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 	Vector contacts = new Vector();
 	Vector tasks = new Vector();
 	Vector comments = new Vector();
-	/*
-	 * Task[] tasks = new Task[200]; int tasksCount = 4;
-	 * 
-	 * Task getTaskByID(int id) { for (int i = 0; i < tasksCount; i++) { if
-	 * (tasks[i].id == id) return tasks[i]; } return null; }
-	 */
+
 	String thisUserJID = new String();
 	String thisContactJID = new String();
 	String thisTaskID = new String();
@@ -154,8 +118,6 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 		display.setCurrent(taskList);
 		taskList.deleteAll();
 		int k = 0;
-		System.out.println("Tasks: " + tasks.size());
-		System.out.println(thisUserJID + ":" + thisContactJID);
 		for (int i = 0; i < tasks.size(); i = i + 1) {
 			Task task = (Task) tasks.elementAt(i);
 			System.out.println(task.owner + ":" + task.sender);
@@ -274,12 +236,12 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 		login.setCommandListener(this);
 		login.append(userJID);
 		login.append(pass);
-		login.append(serv);
+		// TODO: login.append(serv);
 
 		// главное меню
 		main = new List("Главное меню", Choice.IMPLICIT);
 		main.append("контакты", null);
-		main.append("учетная запись", null);
+		// TODO: main.append("учетная запись", null);
 		main.append("выход", null);
 		main.setCommandListener(this);
 		main.addCommand(exit);
@@ -373,7 +335,7 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 		if (getRecordText(1) != null) {
 			userJID.setString(getRecordText(1));
 		} else {
-			userJID.setString("aiv.tst@gmail.com");
+			userJID.setString("test1@gpsgeotrace.com");
 		}
 		if (getRecordText(2) != null) {
 			pass.setString(getRecordText(2));
@@ -383,7 +345,7 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 		if (getRecordText(3) != null) {
 			serv.setString(getRecordText(3));
 		} else {
-			serv.setString("talk.google.com");
+			serv.setString("gpsgeotrace.com");
 		}
 	}
 
@@ -411,9 +373,8 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 		} catch (ArrayIndexOutOfBoundsException e) {
 			System.out.println("Array index out of bounds: " + e);
 		} catch (InvalidRecordIDException e) {
-			System.out.println("Try to add");
 			try {
-				System.out.println(recordStore.addRecord(mass, 0, mass.length));
+				recordStore.addRecord(mass, 0, mass.length);
 			} catch (RecordStoreFullException e2) {
 				System.out.println("Record store full: " + e2);
 			} catch (RecordStoreNotOpenException e2) {
@@ -439,9 +400,11 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 			display.setCurrent(connection);
 			// display.setCurrent(main);
 			jxa = new Jxa(thisUserJID, pass.getString(), "mobile", 10, serv
-					.getString(), "5223", true, "pubsub." + serv
+					.getString(), "5222", false, "pubsub." + serv
 					.getString());
 			jxa.addListener(this);
+			jxa.addProvider(new TaskProvider());
+			jxa.addProvider(new CommentProvider());
 			jxa.start();
 		} else if (c == exit) {
 			destroyApp(true);
@@ -465,10 +428,11 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 				display.setCurrent(formContacts);
 				break;
 			case 1:
-				display.setCurrent(ychet);
-				break;
-			case 2:
 				destroyApp(true);
+				break;
+			// TODO:
+			case 2:
+				display.setCurrent(ychet);
 				break;
 			case 3:
 				jxa.pubsubCreateNode(pubsubNode);
@@ -716,7 +680,8 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 		 * data3); display.setCurrent(connection); } else if ((c == ok) &&
 		 * (name2.getString().equals("") || work2.getString().equals(""))) {
 		 * ychet2.append("Заполните учетную запись полностью!"); } }
-		 */else if (display.getCurrent() == formTask) {
+		 */
+		else if (display.getCurrent() == formTask) {
 			formTaskAction(c, d);
 		} else if (display.getCurrent() == thisTask) {
 			thisTaskAction(c, d);
@@ -749,7 +714,7 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 		System.out.println("Connection failed");
 	}
 
-	public void onContactEvent(final String jid, String name,
+	public void onContactEvent(final String jid, final String name,
 			final String group, final String subscription) {
 		System.out.println("Contact event " + jid + "  " + name + 
 				"  " + group + "  " + subscription);
@@ -898,7 +863,3 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 		}
 	}
 }
-// Убрать main, ychet
-/*
- * aiv.tst@gmail.com qwe12345 talk.google.com
- */
