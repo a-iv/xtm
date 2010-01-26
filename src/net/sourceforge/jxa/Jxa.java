@@ -28,14 +28,20 @@ import net.sourceforge.jxa.packet.Presence;
 import net.sourceforge.jxa.packet.Roster;
 import net.sourceforge.jxa.packet.RosterItem;
 import net.sourceforge.jxa.packet.pubsub.Pubsub;
+import net.sourceforge.jxa.packet.pubsub.PubsubAffiliation;
+import net.sourceforge.jxa.packet.pubsub.PubsubAffiliations;
 import net.sourceforge.jxa.packet.pubsub.PubsubItem;
 import net.sourceforge.jxa.packet.pubsub.PubsubItems;
 import net.sourceforge.jxa.packet.pubsub.PubsubPublish;
+import net.sourceforge.jxa.packet.pubsub.PubsubRetract;
+import net.sourceforge.jxa.packet.pubsub.PubsubSubscription;
 import net.sourceforge.jxa.provider.IQProvider;
 import net.sourceforge.jxa.provider.MessageProvider;
 import net.sourceforge.jxa.provider.PresenceProvider;
 import net.sourceforge.jxa.provider.Provider;
 import net.sourceforge.jxa.provider.RosterProvider;
+import net.sourceforge.jxa.provider.pubsub.PubsubEventProvider;
+import net.sourceforge.jxa.provider.pubsub.PubsubProvider;
 
 import java.io.*;
 import java.util.*;
@@ -111,6 +117,8 @@ public class Jxa extends Manager {
 		addProvider(new PresenceProvider());
 		addProvider(new RosterProvider());
 		addProvider(new Provider("query", "jabber:iq:version", true));
+		addProvider(new PubsubProvider());
+		addProvider(new PubsubEventProvider());
 	}
 
 	/**
@@ -380,10 +388,13 @@ public class Jxa extends Manager {
 		}
 	}
 	
-	private int ID = 0;
+	private static Random random = new Random();
+	private static final String Symbols = "0123456789abcdefghijklmnopqrstuvwxyz";
 	private String getID() {
-		ID = ID + 1;
-		return String.valueOf(ID); 
+		StringBuffer buffer = new StringBuffer(32);
+		for (int i = 0; i < 32; i ++)
+			buffer.append(Symbols.charAt(random.nextInt(Symbols.length())));
+		return buffer.toString(); 
 	}
 
 	/**
@@ -431,13 +442,45 @@ public class Jxa extends Manager {
 	}
 	
 	public void pubsubAllItems(String server, String node) {
-		IQ iq = new IQ("get", server, getID(), new Pubsub(new PubsubItems("items", null, null, node)));
+		IQ iq = new IQ("get", server, getID(), new Pubsub(new PubsubItems(node, null)));
 		sendPacket(iq);
 	}
 	
 	public void pubsubPublish(String server, String node, String id, Packet packet) {
-		Packet publish = new PubsubPublish(node, null, new PubsubItem(id, packet));
+		if (id == null)
+			id = getID();
+		Packet publish = new PubsubPublish(node, new PubsubItem(id, packet));
 		IQ iq = new IQ("set", server, getID(), new Pubsub(publish));
+		sendPacket(iq);
+	}
+	
+	public void pubsubRetract(String server, String node, String id) {
+		IQ iq = new IQ("set", server, getID(), new Pubsub(new PubsubRetract(id)));
+		sendPacket(iq);
+	}
+	
+	public void pubsubAllSubscriptions(String server, String node) {
+		Packet packet = new Packet("subscriptions", null);
+		packet.setProperty("node", node);
+		IQ iq = new IQ("get", server, getID(), new Pubsub(packet));
+		sendPacket(iq);
+	}
+	
+	public void pubsubSetSubscription(String server, String node, String jid, String subscription) {
+		Packet packet = new Packet("subscriptions", null);
+		packet.setProperty("node", node);
+		packet.addPacket(new PubsubSubscription(jid, subscription));
+		IQ iq = new IQ("set", server, getID(), new Pubsub(packet));
+		sendPacket(iq);
+	}
+	
+	public void pubsubAllAffiliations(String server, String node) {
+		IQ iq = new IQ("get", server, getID(), new Pubsub(new PubsubAffiliations(node, null)));
+		sendPacket(iq);
+	}
+	
+	public void pubsubSetAffiliation(String server, String node, String jid, String affiliation) {
+		IQ iq = new IQ("set", server, getID(), new Pubsub(new PubsubAffiliations(node, new PubsubAffiliation(jid, affiliation))));
 		sendPacket(iq);
 	}
 	

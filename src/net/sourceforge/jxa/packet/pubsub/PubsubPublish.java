@@ -1,4 +1,4 @@
---package net.sourceforge.jxa.packet.pubsub;
+package net.sourceforge.jxa.packet.pubsub;
 
 import java.io.IOException;
 

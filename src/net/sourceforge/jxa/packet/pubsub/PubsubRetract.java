@@ -14,6 +14,11 @@ public class PubsubRetract extends Packet {
 	public PubsubRetract() {
 		super(ELEMENT_NAME, NAMESPACE);
 	}
+	
+	public PubsubRetract(String id) {
+		this();
+		this.id = id;
+	}
 
 	public void emit(Manager manager) throws IOException {
 		setProperty("id", id);

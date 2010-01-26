@@ -19,8 +19,13 @@ package net.sourceforge.jxa.client;
 import net.sourceforge.jxa.*;
 import net.sourceforge.jxa.packet.Message;
 import net.sourceforge.jxa.packet.Packet;
+import net.sourceforge.jxa.packet.pubsub.PubsubAffiliation;
+import net.sourceforge.jxa.packet.pubsub.PubsubItem;
+import net.sourceforge.jxa.packet.pubsub.PubsubRetract;
+import net.sourceforge.jxa.packet.pubsub.PubsubSubscription;
 
 import java.io.*;
+import java.util.Enumeration;
 import java.util.Vector;
 
 import javax.microedition.midlet.*;
@@ -53,12 +58,19 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 	private Command update_cmd;
 	private Command create_cmd;
 	private Command list_cmd;
+	private Command sub_cmd;
+	private Command allsub_cmd;
+	private Command allaff_cmd;
+	private Command setaff_cmd;
 	private Image offline_img;
 	private Image online_img;
 	private String whom;
 	private Jxa jxa;
 	private Vector jid_list;
 	private TaskProvider taskProvider = new TaskProvider(); 
+	private String pubsubServer = "pubsub.gpsgeotrace.com";
+	private String pubsubNode = "jxa1";
+
 
 	private Image loadImage(String name) {
 		Image image = null;
@@ -144,7 +156,7 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 		System.out.println("Unsubscribe from " + jid);
 		jxa.unsubscribe(jid);
 	}
-
+	
 	public void commandAction(final Command cmd, final Displayable displayable) {
 		if (cmd == login_cmd) {
 			String id = id_field.getString();
@@ -158,12 +170,13 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 		} else if (cmd == back_cmd) {
 			Display.getDisplay(this).setCurrent(contacts_list);
 		} else if (cmd == send_cmd) {
-			Message message = new Message();
-			message.to = whom;
 			Task task = new Task();
 			task.description = send_box.getString();
-			message.addPacket(task);
-			jxa.sendPacket(message);
+//			Message message = new Message();
+//			message.to = whom;
+//			message.addPacket(task);
+//			jxa.sendPacket(message);
+			jxa.pubsubPublish(pubsubServer, pubsubNode, null, task);
 			Display.getDisplay(this).setCurrent(contacts_list);
 		} else if (cmd == contact_cmd) {
 			Display.getDisplay(this).setCurrent(subscribe_form);
@@ -189,9 +202,17 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 			jxa.unsubscribe(subscribe_field.getString());
 			Display.getDisplay(this).setCurrent(contacts_list);
 		} else if (cmd == create_cmd) {
-			jxa.pubsubCreateNode("gpsgeotrace.com", "jxa1");
+			jxa.pubsubCreateNode(pubsubServer, pubsubNode);
 		} else if (cmd == list_cmd) {
-			jxa.pubsubAllItems("gpsgeotrace.com", "jxa1");
+			jxa.pubsubAllItems(pubsubServer, pubsubNode);
+		} else if (cmd == sub_cmd) {
+			jxa.pubsubSubscribe(pubsubServer, pubsubNode);
+		} else if (cmd == allsub_cmd) {
+			jxa.pubsubAllSubscriptions(pubsubServer, pubsubNode);
+		} else if (cmd == allaff_cmd) {
+			jxa.pubsubAllAffiliations(pubsubServer, pubsubNode);
+		} else if (cmd == setaff_cmd) {
+			jxa.pubsubSetAffiliation(pubsubServer, pubsubNode, "aiv.tst2@gpsgeotrace.com", "publisher");
 		} else if (cmd == List.SELECT_COMMAND) {
 			whom = (String) jid_list.elementAt(contacts_list
 					.getSelectedIndex());
@@ -227,10 +248,19 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 		rename_cmd = new Command("Rename", Command.ITEM, 1);
 		create_cmd = new Command("Create pubsub", Command.ITEM, 2);
 		list_cmd = new Command("List pubsub", Command.ITEM, 3);
+		sub_cmd = new Command("Subscribe pubsub", Command.ITEM, 4);
+		allsub_cmd = new Command("All subscribtions", Command.ITEM, 5);
+		allaff_cmd = new Command("All affilations", Command.ITEM, 6);
+		setaff_cmd = new Command("Set affilation", Command.ITEM, 7);
+		
 		contacts_list.addCommand(contact_cmd);
 		contacts_list.addCommand(rename_cmd);
 		contacts_list.addCommand(create_cmd);
 		contacts_list.addCommand(list_cmd);
+		contacts_list.addCommand(sub_cmd);
+		contacts_list.addCommand(allsub_cmd);
+		contacts_list.addCommand(allaff_cmd);
+		contacts_list.addCommand(setaff_cmd);
 		contacts_list.setCommandListener(this);
 
 		send_box = new TextBox(null, null, 50, TextField.ANY);
@@ -279,11 +309,19 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 			msg_alert.setTimeout(Alert.FOREVER);
 			Display.getDisplay(this).setCurrent(msg_alert);
 		} else if (packet.equals("subscription", null)) {
-			String node = packet.getProperty("node");
-			String jid = packet.getProperty("jid");
-			String subid = packet.getProperty("subid");
-			String subscription = packet.getProperty("subscription");
-			System.out.println(jid + " subscribed to " + node + " as " + subscription + " #" + subid);
+			PubsubSubscription subscription = (PubsubSubscription) packet;
+			System.out.println(subscription.jid + " subscribed to " + subscription.node + " as " + subscription.subscription + " #" + subscription.subid);
+		} else if (packet.equals("affiliation", null)) {
+			PubsubAffiliation affiliation = (PubsubAffiliation) packet;
+			System.out.println(affiliation.jid + " is " + affiliation.affiliation);
+		} else if (packet.equals("item", null)) {
+			PubsubItem item = (PubsubItem) packet;
+			System.out.println("Item: " + item.id);
+			for (Enumeration e = item.getPackets(); e.hasMoreElements();)
+				System.out.println("With: " + e.nextElement());
+		} else if (packet.equals("retract", null)) {
+			PubsubRetract item = (PubsubRetract) packet;
+			System.out.println("Retract: " + item.id);
 		}
 	}
 }
