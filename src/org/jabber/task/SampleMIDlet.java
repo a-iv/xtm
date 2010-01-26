@@ -1,14 +1,13 @@
 package org.jabber.task;
 
 import java.io.IOException;
+import java.util.Enumeration;
 import java.util.Vector;
-import java.util.Random;
 
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.midlet.MIDletStateChangeException;
 
 import javax.microedition.lcdui.*;
-import javax.microedition.midlet.*;
 import javax.microedition.rms.InvalidRecordIDException;
 import javax.microedition.rms.RecordStore;
 import javax.microedition.rms.RecordStoreException;
@@ -47,13 +46,17 @@ import javax.microedition.rms.RecordStoreNotFoundException;
 
 import net.sourceforge.jxa.Jxa;
 import net.sourceforge.jxa.XmppListener;
-import net.sourceforge.jxa.client.Roster;
+import net.sourceforge.jxa.packet.Packet;
+import net.sourceforge.jxa.packet.pubsub.PubsubItem;
+import net.sourceforge.jxa.packet.pubsub.PubsubRetract;
+import net.sourceforge.jxa.packet.pubsub.PubsubSubscription;
 
 public class SampleMIDlet extends MIDlet implements CommandListener,
 		XmppListener {
 	int k = 0;
 
 	String recordStoreName = "user2";
+	String pubsubNode = "sample";
 	Display display;
 	Form login = new Form("Введите пароль");
 	List main;
@@ -127,7 +130,8 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 	 */
 	String thisUserJID = new String();
 	String thisContactJID = new String();
-	int thisTaskID;
+	String thisTaskID = new String();
+	String subid = null;
 
 	void printContacts() {
 		int selectedItem = formContacts.getSelectedIndex();
@@ -162,13 +166,13 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 				if (task.fulfilment == 10) {
 					if (compleated) {
 						taskList.append(task.theme, onlineImg);
-						printedTaskIDs.addElement(new Integer(task.id));
+						printedTaskIDs.addElement(task.id);
 						k = k + 1;
 					}
 				} else {
 					if (notCompleated) {
 						taskList.append(task.theme, offlineImg);
-						printedTaskIDs.addElement(new Integer(task.id));
+						printedTaskIDs.addElement(task.id);
 						k = k + 1;
 					}
 				}
@@ -177,12 +181,12 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 	}
 
 	void onDeleteTask() {
-		int id = ((Integer) printedTaskIDs.elementAt(taskList
-				.getSelectedIndex())).intValue();
+		String id = ((String) printedTaskIDs.elementAt(taskList
+				.getSelectedIndex()));
 		int index = 0;
 		for (int i = 0; i < tasks.size(); i = i + 1) {
 			Task task = (Task) tasks.elementAt(i);
-			if (task.id == id) {
+			if (task.id.equals(id)) {
 				index = i;
 			}
 		}
@@ -190,11 +194,11 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 		printTasks(true, true);
 	}
 
-	void deleteTask(int id) {
+	void deleteTask(String id) {
 		int k = 0;
 		for (int i = 0; i < tasks.size(); i++) {
 			Task task = (Task) tasks.elementAt(i);
-			if (id == task.id) {
+			if (id.equals(task.id)) {
 				k = i;
 			}
 		}
@@ -203,8 +207,8 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 	}
 
 	int getTaskByID() {
-		int id = ((Integer) printedTaskIDs.elementAt(taskList
-				.getSelectedIndex())).intValue();
+		String id = ((String) printedTaskIDs.elementAt(taskList
+				.getSelectedIndex()));
 		int index;
 		for (int i = 0; i < tasks.size(); i++) {
 			Task task = (Task) tasks.elementAt(i);
@@ -435,7 +439,8 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 			display.setCurrent(connection);
 			// display.setCurrent(main);
 			jxa = new Jxa(thisUserJID, pass.getString(), "mobile", 10, serv
-					.getString(), "5223", true);
+					.getString(), "5223", true, "pubsub." + serv
+					.getString());
 			jxa.addListener(this);
 			jxa.start();
 		} else if (c == exit) {
@@ -465,6 +470,12 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 			case 2:
 				destroyApp(true);
 				break;
+			case 3:
+				jxa.pubsubCreateNode(pubsubNode);
+				break;
+			case 4:
+				jxa.pubsubSubscribe(pubsubNode);
+				break;
 			}
 		}
 	}
@@ -482,7 +493,7 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 			display.setCurrent(sort);
 		} else {
 			int qq = taskList.getSelectedIndex();
-			thisTaskID = ((Integer) printedTaskIDs.elementAt(qq)).intValue();
+			thisTaskID = ((String) printedTaskIDs.elementAt(qq));
 			String topictask = new String();
 			topictask = taskList.getString(qq);
 			display.setCurrent(thisTask);
@@ -546,12 +557,15 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 		if (c == back) {
 			display.setCurrent(thisTask);
 		} else if (c == sent) {
-			String text = messagedisplay.getString();
-			Random random = new Random();
-			comments.addElement(new Comment(thisTaskID, text, thisUserJID, random.nextInt()));
-			jxa.sendComment(thisContactJID, (Comment) comments.elementAt(comments.size() - 1));
+			Comment comment = new Comment();
+			comment.id = jxa.getID();
+			comment.task = thisTaskID;
+			comment.sender = thisUserJID;
+			comment.text = messagedisplay.getString();
+			// TODO: comments.addElement(comment);
+			// TODO: thisTask.append(text + "\n");
+			jxa.pubsubPublish(pubsubNode, comment.id, comment);
 			display.setCurrent(thisTask);
-			thisTask.append(text + "\n");
 		}
 	}
 
@@ -594,17 +608,16 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 		} else if (c == ok && !topic.equals("")) {
 			String strTopic = topic.getString();
 			String strDescript = descript.getString();
-			Random random = new Random();
 			Task task = new Task();
-			task.id = random.nextInt();
+			task.id = jxa.getID();
 			task.description = strDescript;
 			task.fulfilment = 0;
 			task.owner = thisContactJID;
 			task.sender = thisUserJID;
 			task.theme = strTopic;
-			jxa.sendTask(thisContactJID, task);
-			tasks.addElement(task);
-			printTasks(true, true);
+			jxa.pubsubPublish(pubsubNode, task.id, task);
+			// TODO: tasks.addElement(task);
+			// TODO: printTasks(true, true);
 			display.setCurrent(taskList);
 		}
 	}
@@ -614,7 +627,7 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 			int i;
 			for (i = 0; i < tasks.size(); i = i + 1) {
 				Task task = (Task) tasks.elementAt(i);
-				if (task.id == thisTaskID) {
+				if (task.id.equals(thisTaskID)) {
 					task.fulfilment = gauge.getValue();
 				}
 			}
@@ -635,9 +648,9 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 			task.theme = topic2.getString();
 			task.description = descript2.getString();
 			task.fulfilment = gauge.getValue();
-			jxa.sendTask(thisContactJID, task);
+			jxa.pubsubPublish(pubsubNode, task.id, task);
+			// TODO: printTasks(true,true); 
 			display.setCurrent(taskList);
-			printTasks(true,true);
 		}
 	}
 
@@ -723,21 +736,16 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 	}
 
 	public void onAuth(String resource) {
-		try {
-			jxa.getRoster();
-		} catch (final IOException ex) {
-			ex.printStackTrace();
-		}
+		jxa.getRoster();
+		jxa.pubsubAllSubscriptions(pubsubNode);
 		display.setCurrent(main);
 	}
 
 	public void onAuthFailed(String message) {
-		// TODO Auto-generated method stub
 		System.out.println("Auth failed");
 	}
 
 	public void onConnFailed(String msg) {
-		// TODO Auto-generated method stub
 		System.out.println("Connection failed");
 	}
 
@@ -857,6 +865,37 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 			comments.setElementAt(comment, index);
 		}
 		printComments();
+	}
+
+	public void onItemDelete(String id) {
+		
+	}
+	
+	public void onEvent(Packet packet) {
+		if (packet.equals("subscription", null)) {
+			PubsubSubscription subscription = (PubsubSubscription) packet;
+			if (subscription.jid.equals(jxa.myjid) && subscription.node.equals(pubsubNode) && subid == null) {
+				subid = subscription.subid;
+				jxa.pubsubAllItems(pubsubNode, subid);
+			}
+		} else if (packet.equals("item", null)) {
+			PubsubItem item = (PubsubItem) packet;
+			for (Enumeration e = item.getPackets(); e.hasMoreElements();) {
+				Packet found = (Packet) e.nextElement();
+				if (found.equals("task", "http://jabber.org/protocol/task")) {
+					Task task = (Task) found;
+					task.id = item.id;
+					onTaskEvent(task);
+				} else if (found.equals("comment", "http://jabber.org/protocol/task")) {
+					Comment comment = (Comment) found;
+					comment.id = comment.id;
+					onCommentEvent(comment);
+				}
+			}
+		} else if (packet.equals("retract", null)) {
+			PubsubRetract retract = (PubsubRetract) packet;
+			onItemDelete(retract.id);
+		}
 	}
 }
 // Убрать main, ychet
