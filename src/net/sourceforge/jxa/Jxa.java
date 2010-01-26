@@ -493,11 +493,12 @@ public class Jxa extends Manager {
 		Data data = new Data("submit");
 		data.addPacket(new DataField("FORM_TYPE", "hidden", "http://jabber.org/protocol/pubsub#node_config"));
 		data.addPacket(new DataField("pubsub#access_model", null, "open"));
+		data.addPacket(new DataField("pubsub#publish_model", null, "open"));
 		data.addPacket(new DataField("pubsub#max_payload_size", null, "65536"));
 		data.addPacket(new DataField("pubsub#persist_items", null, "1"));
 		data.addPacket(new DataField("pubsub#deliver_payloads", null, "1"));
 		data.addPacket(new DataField("pubsub#deliver_notifications", null, "1"));
-		data.addPacket(new DataField("pubsub#max_items", null, "-1"));
+		data.addPacket(new DataField("pubsub#max_items", null, "1000"));
 		
 		Pubsub pubsub = new Pubsub();
 		pubsub.addPacket(create);

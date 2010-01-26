@@ -69,7 +69,7 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 	private Vector jid_list;
 	private TaskProvider taskProvider = new TaskProvider(); 
 	private String pubsubServer = "pubsub.gpsgeotrace.com";
-	private String pubsubNode = "jxac";
+	private String pubsubNode = "jxa3";
 	private String subid;
 
 
