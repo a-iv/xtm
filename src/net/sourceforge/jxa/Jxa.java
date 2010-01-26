@@ -32,6 +32,7 @@ import net.sourceforge.jxa.packet.pubsub.PubsubAffiliation;
 import net.sourceforge.jxa.packet.pubsub.PubsubAffiliations;
 import net.sourceforge.jxa.packet.pubsub.PubsubItem;
 import net.sourceforge.jxa.packet.pubsub.PubsubItems;
+import net.sourceforge.jxa.packet.pubsub.PubsubOwner;
 import net.sourceforge.jxa.packet.pubsub.PubsubPublish;
 import net.sourceforge.jxa.packet.pubsub.PubsubRetract;
 import net.sourceforge.jxa.packet.pubsub.PubsubSubscription;
@@ -482,7 +483,7 @@ public class Jxa extends Manager {
 	}
 	
 	public void pubsubSetAffiliation(String server, String node, String jid, String affiliation) {
-		IQ iq = new IQ("set", server, getID(), new Pubsub(new PubsubAffiliations(node, new PubsubAffiliation(jid, affiliation))));
+		IQ iq = new IQ("set", server, getID(), new PubsubOwner(new PubsubAffiliations(node, new PubsubAffiliation(jid, affiliation))));
 		sendPacket(iq);
 	}
 	

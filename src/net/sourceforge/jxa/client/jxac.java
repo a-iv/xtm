@@ -317,7 +317,7 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 				subid = subscription.subid;
 		} else if (packet.equals("affiliation", null)) {
 			PubsubAffiliation affiliation = (PubsubAffiliation) packet;
-			System.out.println(affiliation.jid + " is " + affiliation.affiliation);
+			System.out.println(affiliation.jid + " on " + affiliation.node + " is " + affiliation.affiliation);
 		} else if (packet.equals("item", null)) {
 			PubsubItem item = (PubsubItem) packet;
 			System.out.println("Item: " + item.id);

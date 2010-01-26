@@ -16,6 +16,7 @@ public class PubsubAffiliationProvider extends Provider {
 	protected Packet parseComplited(Packet packet) {
 		PubsubAffiliation affiliation = (PubsubAffiliation) packet;
 		affiliation.jid = packet.getProperty("jid");
+		affiliation.node = packet.getProperty("node");
 		affiliation.affiliation = packet.getProperty("affiliation");
 		return affiliation;
 	}

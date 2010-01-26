@@ -7,6 +7,7 @@ import net.sourceforge.jxa.packet.Packet;
 
 public class PubsubAffiliation extends Packet {
 	public String jid;
+	public String node;
 	public String affiliation;
 	
 	public static final String ELEMENT_NAME = "affiliation";
@@ -24,6 +25,7 @@ public class PubsubAffiliation extends Packet {
 
 	public void emit(Manager manager) throws IOException {
 		setProperty("jid", jid);
+		setProperty("node", node);
 		setProperty("affiliation", affiliation);
 		super.emit(manager);
 	}
