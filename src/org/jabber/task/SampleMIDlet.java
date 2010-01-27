@@ -164,7 +164,38 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 		tasks.removeElementAt(k);
 		printTasks(true, true);
 	}
+	
+	void updateTask(Task task) {
+		for (int i = 0; tasks.size() > i; i++) {
+			if (task.id.equals(((Task) tasks.elementAt(i)).id)) {
+				String prevId = task.id;
+				task.id = jxa.getRandomID();
+				tasks.setElementAt(task, i);
+				jxa.pubsubRetract(pubsubNode, prevId);
+				jxa.pubsubPublish(pubsubNode, task.id, task);
+				printTasks(true, true);
+				for (int j = 0; comments.size() > j; j++) {
+					if (task.id.equals(((Comment) comments.elementAt(j)).task)) {
+						updateComment((Comment) comments.elementAt(j));
+					}
+				}
+			}
+		}
+	}
 
+	void updateComment(Comment comment) {
+		for (int i = 0; comments.size() > i; i++) {
+			if (comment.id.equals(((Comment) comments.elementAt(i)).id)) {
+				String prevId = comment.id;
+				comment.id = jxa.getRandomID();
+				tasks.setElementAt(comment, i);
+				jxa.pubsubRetract(pubsubNode, prevId);
+				jxa.pubsubPublish(pubsubNode, comment.id, comment);
+				printComments();
+			}
+		}
+	}
+	
 	int getTaskByID() {
 		int index = taskList.getSelectedIndex();
 		if (index == -1)
@@ -615,8 +646,7 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 					update.theme = topic2.getString();
 					update.description = descript2.getString();
 					update.fulfilment = gauge.getValue();
-					System.out.println("Update " + update.id);
-					jxa.pubsubPublish(pubsubNode, update.id, update);
+					updateTask(update);
 				}
 			}
 			display.setCurrent(taskList);
