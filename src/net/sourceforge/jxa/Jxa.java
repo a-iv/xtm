@@ -64,9 +64,6 @@ public class Jxa extends Manager {
 	private String resource;
 	private final int priority;
 
-	private InputStream is;
-	private OutputStream os;
-	
 	/**
 	 * If you create this object all variables will be saved and the method
 	 * {@link #run()} is started to log in on jabber server and listen to parse
@@ -130,11 +127,13 @@ public class Jxa extends Manager {
 	 */
 	public void run() {
 		try {
+			InputStream is;
+			OutputStream os;
 			if (!use_ssl) {
 				final StreamConnection connection = (StreamConnection) Connector
 						.open("socket://" + this.host + ":" + this.port);
-				this.reader = new XmlReader(connection.openInputStream());
-				this.writer = new XmlWriter(connection.openOutputStream());
+				is = connection.openInputStream();
+				os = connection.openOutputStream();
 			} else {
 				final SecureConnection sc = (SecureConnection) Connector.open(
 						"ssl://" + this.server + ":" + this.port,
@@ -143,9 +142,14 @@ public class Jxa extends Manager {
 				// sc.setSocketOption(SocketConnection.LINGER, 0);
 				is = sc.openInputStream();
 				os = sc.openOutputStream();
-				this.reader = new XmlReader(is);
-				this.writer = new XmlWriter(os);
 			}
+			this.reader = new XmlReader(is);
+			this.writer = new XmlWriter(os);
+			/*
+			KXmlParser parser = new KXmlParser();
+            parser.setFeature(KXmlParser.FEATURE_PROCESS_NAMESPACES, true);
+            parser.setInput(new InputStreamReader(is, "UTF-8"));
+            */
 		} catch (final Exception e) {
 			java.lang.System.out.println(e);
 			this.connectionFailed(e.toString());
@@ -392,9 +396,9 @@ public class Jxa extends Manager {
 	
 	private static Random random = new Random();
 	private static final String Symbols = "0123456789abcdefghijklmnopqrstuvwxyz";
-	public String getID() {
-		StringBuffer buffer = new StringBuffer(32);
-		for (int i = 0; i < 32; i ++)
+	public String getRandomID() {
+		StringBuffer buffer = new StringBuffer(16);
+		for (int i = 0; i < 16; i ++)
 			buffer.append(Symbols.charAt(random.nextInt(Symbols.length())));
 		return buffer.toString(); 
 	}
@@ -407,7 +411,7 @@ public class Jxa extends Manager {
 	 *             IOException.
 	 */
 	public void getRoster() {
-		IQ iq = new IQ("get", null, getID(), new Roster());
+		IQ iq = new IQ("get", null, getRandomID(), new Roster());
 		sendPacket(iq);
 	}
 	
@@ -418,7 +422,7 @@ public class Jxa extends Manager {
 		Packet subscribe = new Packet("subscribe");
 		subscribe.setProperty("node", node);
 		subscribe.setProperty("jid", myjid);
-		IQ iq = new IQ("set", pubsubServer, getID(), new Pubsub(subscribe));
+		IQ iq = new IQ("set", pubsubServer, getRandomID(), new Pubsub(subscribe));
 		sendPacket(iq);
 	}
 	
@@ -426,7 +430,7 @@ public class Jxa extends Manager {
 		Packet subscribe = new Packet("unsubscribe");
 		subscribe.setProperty("node", node);
 		subscribe.setProperty("jid", myjid);
-		IQ iq = new IQ("set", pubsubServer, getID(), new Pubsub(subscribe));
+		IQ iq = new IQ("set", pubsubServer, getRandomID(), new Pubsub(subscribe));
 		sendPacket(iq);
 	}
 	
@@ -439,35 +443,35 @@ public class Jxa extends Manager {
 		options.setProperty("node", node);
 		options.setProperty("jid", myjid);
 		
-		IQ iq = new IQ("set", pubsubServer, getID(), new Pubsub(options));
+		IQ iq = new IQ("set", pubsubServer, getRandomID(), new Pubsub(options));
 		sendPacket(iq);
 	}
 	
 	public void pubsubAllItems(String node, String subid) {
 		Packet items = new PubsubItems(node, null);
 		items.setProperty("subid", subid);
-		IQ iq = new IQ("get", pubsubServer, getID(), new Pubsub(items));
+		IQ iq = new IQ("get", pubsubServer, getRandomID(), new Pubsub(items));
 		sendPacket(iq);
 	}
 	
 	public void pubsubPublish(String node, String id, Packet packet) {
 		if (id == null)
-			id = getID();
+			id = getRandomID();
 		Packet publish = new PubsubPublish(node, new PubsubItem(id, packet));
-		IQ iq = new IQ("set", pubsubServer, getID(), new Pubsub(publish));
+		IQ iq = new IQ("set", pubsubServer, getRandomID(), new Pubsub(publish));
 		sendPacket(iq);
 	}
 	
 	public void pubsubRetract(String node, String id) {
 		Packet retract = new PubsubRetract(node, new PubsubItem(id, null));
-		IQ iq = new IQ("set", pubsubServer, getID(), new Pubsub(retract));
+		IQ iq = new IQ("set", pubsubServer, getRandomID(), new Pubsub(retract));
 		sendPacket(iq);
 	}
 	
 	public void pubsubAllSubscriptions(String node) {
 		Packet packet = new Packet("subscriptions", null);
 		packet.setProperty("node", node);
-		IQ iq = new IQ("get", pubsubServer, getID(), new Pubsub(packet));
+		IQ iq = new IQ("get", pubsubServer, getRandomID(), new Pubsub(packet));
 		sendPacket(iq);
 	}
 	
@@ -475,17 +479,17 @@ public class Jxa extends Manager {
 		Packet packet = new Packet("subscriptions", null);
 		packet.setProperty("node", node);
 		packet.addPacket(new PubsubSubscription(jid, subscription));
-		IQ iq = new IQ("set", pubsubServer, getID(), new Pubsub(packet));
+		IQ iq = new IQ("set", pubsubServer, getRandomID(), new Pubsub(packet));
 		sendPacket(iq);
 	}
 	
 	public void pubsubAllAffiliations(String node) {
-		IQ iq = new IQ("get", pubsubServer, getID(), new Pubsub(new PubsubAffiliations(node, null)));
+		IQ iq = new IQ("get", pubsubServer, getRandomID(), new Pubsub(new PubsubAffiliations(node, null)));
 		sendPacket(iq);
 	}
 	
 	public void pubsubSetAffiliation(String node, String jid, String affiliation) {
-		IQ iq = new IQ("set", pubsubServer, getID(), new PubsubOwner(new PubsubAffiliations(node, new PubsubAffiliation(jid, affiliation))));
+		IQ iq = new IQ("set", pubsubServer, getRandomID(), new PubsubOwner(new PubsubAffiliations(node, new PubsubAffiliation(jid, affiliation))));
 		sendPacket(iq);
 	}
 	
@@ -507,7 +511,7 @@ public class Jxa extends Manager {
 		pubsub.addPacket(create);
 		pubsub.addPacket(new Packet("configure", null, data));
 
-		IQ iq = new IQ("set", pubsubServer, getID(), pubsub);
+		IQ iq = new IQ("set", pubsubServer, getRandomID(), pubsub);
 		sendPacket(iq);
 	}
 
@@ -563,8 +567,15 @@ public class Jxa extends Manager {
 						message.from.substring(0, index), message.body);
 					continue;
 				}
+			} else if (packet.equals("iq", null)) {
+				IQ iq = (IQ) packet;
+				System.out.println(iq.type + " from " + iq.from + " to " + iq.to + " : " + iq.id);
+				for (Enumeration packets = iq.getPackets(); packets.hasMoreElements();) {
+					System.out.println("With: " + packets.nextElement());
+				}
+				
 			} else if (packet.equals("error", null)) {
-				System.out.println("Error: " + packet.getPayload());
+				System.out.println("Error: " + packet.getProperty("type"));
 			} else if (packet.equals("bind", "urn:ietf:params:xml:ns:xmpp-bind")) {
 				Bind bind = (Bind) packet;
 				xl.onAuth(bind.getResource());

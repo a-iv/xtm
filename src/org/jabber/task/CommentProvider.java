@@ -7,7 +7,7 @@ import net.sourceforge.jxa.provider.Provider;
 
 public class CommentProvider extends Provider {
 	public CommentProvider() {
-		super("comment", "http://jabber.org/protocol/task", true);
+		super("comment", "http://jabber.org/protocol/task", false);
 	}
 
 	protected Packet createPacket() {

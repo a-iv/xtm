@@ -4,10 +4,7 @@ import java.io.IOException;
 import java.util.Enumeration;
 import java.util.Vector;
 
-import net.sourceforge.jxa.XmlReader;
-import net.sourceforge.jxa.XmlWriter;
 import net.sourceforge.jxa.XmppListener;
-//import net.sourceforge.jxa.packet.Message;
 import net.sourceforge.jxa.packet.Packet;
 import net.sourceforge.jxa.provider.Provider;
 import net.sourceforge.jxa.provider.SkipProvider;

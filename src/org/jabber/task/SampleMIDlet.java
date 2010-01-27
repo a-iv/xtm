@@ -62,8 +62,8 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 	TextField descript2 = new TextField("Описание:", "", 1024, 0);
 	TextField userJID = new TextField("JID:", "", 1024, 0);
 	TextField serv = new TextField("server", "", 128, 0);
-	TextField rename = new TextField("Имя:  ", "" , 128, 0);
-	TextField regroup = new TextField("Группа:  ", "" , 128, 0);
+	TextField rename = new TextField("Имя:  ", "", 128, 0);
+	TextField regroup = new TextField("Группа:  ", "", 128, 0);
 
 	Gauge gauge = new Gauge("Выполнено", true, 10, 0);
 
@@ -75,6 +75,7 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 	Command info = new Command("Инфо о контакте", Command.ITEM, 4);
 	Command open = new Command("Открыть", Command.ITEM, 0);
 	Command deletec = new Command("Удалить контакт", Command.ITEM, 4);
+	Command affiliation = new Command("Предоставить привелегии", Command.ITEM, 5);
 	Command newc = new Command("Добавить контакт", Command.ITEM, 4);
 	Command yes = new Command("Да", Command.ITEM, 5);
 	Command no = new Command("Нет", Command.ITEM, 5);
@@ -102,8 +103,8 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 		formContacts.deleteAll();
 		for (int i = 0; i < contacts.size(); i++) {
 			Contact contact = (Contact) contacts.elementAt(i);
-			if (contact.online){
-			formContacts.append(contact.name, onlineImg);
+			if (contact.online) {
+				formContacts.append(contact.name, onlineImg);
 			} else {
 				formContacts.append(contact.name, offlineImg);
 			}
@@ -115,12 +116,10 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 	Vector printedTaskIDs = new Vector();
 
 	void printTasks(boolean compleated, boolean notCompleated) {
-		display.setCurrent(taskList);
 		taskList.deleteAll();
-		int k = 0;
+		printedTaskIDs.removeAllElements();
 		for (int i = 0; i < tasks.size(); i = i + 1) {
 			Task task = (Task) tasks.elementAt(i);
-			System.out.println(task.owner + ":" + task.sender);
 			if ((task.owner.equals(thisUserJID) && task.sender
 					.equals(thisContactJID))
 					|| (task.owner.equals(thisContactJID) && task.sender
@@ -129,13 +128,11 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 					if (compleated) {
 						taskList.append(task.theme, onlineImg);
 						printedTaskIDs.addElement(task.id);
-						k = k + 1;
 					}
 				} else {
 					if (notCompleated) {
 						taskList.append(task.theme, offlineImg);
 						printedTaskIDs.addElement(task.id);
-						k = k + 1;
 					}
 				}
 			}
@@ -169,41 +166,42 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 	}
 
 	int getTaskByID() {
-		String id = ((String) printedTaskIDs.elementAt(taskList
-				.getSelectedIndex()));
-		int index;
+		int index = taskList.getSelectedIndex();
+		if (index == -1)
+			return -1;
+		String id = ((String) printedTaskIDs.elementAt(index));
 		for (int i = 0; i < tasks.size(); i++) {
 			Task task = (Task) tasks.elementAt(i);
-			if (task.id == id) {
-				index = i;
-				return index;
+			if (task.id.equals(id)) {
+				return i;
 			}
 		}
 		return -1;
 	}
 
 	void printComments() {
+		int index = getTaskByID();
+		if (index == -1)
+			return;
+		Task task = (Task) tasks.elementAt(index);
 		thisTask.deleteAll();
 		thisTask.append(gauge);
 		gauge.setPreferredSize(200, 50);
-		display.setCurrent(thisTask);
-		Task task = (Task) tasks.elementAt(getTaskByID());
 		gauge.setValue(task.fulfilment);
-		//if (task.sender == thisUserJID) {
-			thisTask.append(topic2);
-			topic2.setString(task.theme);
-			thisTask.append(descript2);
-			descript2.setString(task.description);
-		/*} else {
-			thisTask.setTitle(task.theme);
-			thisTask.append("Описание:" + "\n");
-			thisTask.append(task.description + "\n");
-		}*/
+		// if (task.sender == thisUserJID) {
+		thisTask.append(topic2);
+		topic2.setString(task.theme);
+		thisTask.append(descript2);
+		descript2.setString(task.description);
+		/*
+		 * } else { thisTask.setTitle(task.theme); thisTask.append("Описание:" +
+		 * "\n"); thisTask.append(task.description + "\n"); }
+		 */
 		thisTask.append("Комментарии:" + "\n");
 		for (int i = 0; i < comments.size(); i = i + 1) {
 			Comment comment = (Comment) comments.elementAt(i);
-			if (comment.task == task.id) {
-				thisTask.append(comment.text + "\n");
+			if (comment.task.equals(task.id)) {
+				thisTask.append(new StringItem(comment.sender, comment.text));
 			}
 		}
 	}
@@ -270,6 +268,8 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 		formContacts.addCommand(newc);
 		formContacts.addCommand(info);
 		formContacts.addCommand(deletec);
+		formContacts.addCommand(affiliation);
+		
 		formContacts.addCommand(open);
 		printContacts();
 
@@ -400,8 +400,7 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 			display.setCurrent(connection);
 			// display.setCurrent(main);
 			jxa = new Jxa(thisUserJID, pass.getString(), "mobile", 10, serv
-					.getString(), "5222", false, "pubsub." + serv
-					.getString());
+					.getString(), "5222", false, "pubsub." + serv.getString());
 			jxa.addListener(this);
 			jxa.addProvider(new TaskProvider());
 			jxa.addProvider(new CommentProvider());
@@ -448,21 +447,25 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 		if (c == back) {
 			display.setCurrent(formContacts);
 		} else if (c == deleteThisTask) {
-			onDeleteTask();
-			printTasks(true, true);
+			int index = taskList.getSelectedIndex();
+			if (index != -1) {
+				thisTaskID = ((String) printedTaskIDs.elementAt(index));
+				jxa.pubsubRetract(pubsubNode, thisTaskID);
+			}
 		} else if (c == newTask) {
 			display.setCurrent(formTask);
 			topic.setString("");
 		} else if (c == cSort) {
 			display.setCurrent(sort);
 		} else {
-			int qq = taskList.getSelectedIndex();
-			thisTaskID = ((String) printedTaskIDs.elementAt(qq));
-			String topictask = new String();
-			topictask = taskList.getString(qq);
-			display.setCurrent(thisTask);
-			printComments();
-			thisTask.setTitle(topictask);
+			int index = taskList.getSelectedIndex();
+			if (index != -1) {
+				thisTaskID = ((String) printedTaskIDs.elementAt(index));
+				String topictask = taskList.getString(index);
+				display.setCurrent(thisTask);
+				printComments();
+				thisTask.setTitle(topictask);
+			}
 		}
 	}
 
@@ -491,6 +494,9 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 		} else if (c == deletec) {
 			jxa.unsubscribe(((Contact) contacts.elementAt(formContacts
 					.getSelectedIndex())).jid);
+		} else if (c == affiliation) {
+			jxa.pubsubSetAffiliation(pubsubNode, ((Contact) contacts.
+					elementAt(formContacts.getSelectedIndex())).jid, "owner");
 		} else if (c == newTask) {
 			thisContactJID = ((Contact) contacts.elementAt(formContacts
 					.getSelectedIndex())).jid;
@@ -522,12 +528,11 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 			display.setCurrent(thisTask);
 		} else if (c == sent) {
 			Comment comment = new Comment();
-			comment.id = jxa.getID();
+			comment.id = jxa.getRandomID();
 			comment.task = thisTaskID;
 			comment.sender = thisUserJID;
 			comment.text = messagedisplay.getString();
-			// TODO: comments.addElement(comment);
-			// TODO: thisTask.append(text + "\n");
+			System.out.println("Comment: " + comment.id);
 			jxa.pubsubPublish(pubsubNode, comment.id, comment);
 			display.setCurrent(thisTask);
 		}
@@ -556,7 +561,7 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 	public void contactinfoAction(Command c, Displayable d) {
 		if (c == back) {
 			display.setCurrent(formContacts);
-		} else if (c == save){
+		} else if (c == save) {
 			String name = rename.getString();
 			String groupp = regroup.getString();
 			Vector group = new Vector();
@@ -573,15 +578,14 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 			String strTopic = topic.getString();
 			String strDescript = descript.getString();
 			Task task = new Task();
-			task.id = jxa.getID();
+			task.id = jxa.getRandomID();
 			task.description = strDescript;
 			task.fulfilment = 0;
 			task.owner = thisContactJID;
 			task.sender = thisUserJID;
 			task.theme = strTopic;
+			System.out.println("Create " + task.id);
 			jxa.pubsubPublish(pubsubNode, task.id, task);
-			// TODO: tasks.addElement(task);
-			// TODO: printTasks(true, true);
 			display.setCurrent(taskList);
 		}
 	}
@@ -602,18 +606,19 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 			messagedisplay.setString("");
 		} else if (c == fulfil) {
 			gauge.setValue(10);
-		} else if(c == update){
-			Task task = new Task();
-			for (int i = 0; tasks.size()>i ; i++){
-				if (thisTaskID == ((Task) tasks.elementAt(i)).id){
-					task = (Task) tasks.elementAt(i);
+		} else if (c == update) {
+			for (int i = 0; tasks.size() > i; i++) {
+				if (thisTaskID.equals(((Task) tasks.elementAt(i)).id)) {
+					Task task = (Task) tasks.elementAt(i);
+					Task update = new Task();
+					update.id = task.id;
+					update.theme = topic2.getString();
+					update.description = descript2.getString();
+					update.fulfilment = gauge.getValue();
+					System.out.println("Update " + update.id);
+					jxa.pubsubPublish(pubsubNode, update.id, update);
 				}
 			}
-			task.theme = topic2.getString();
-			task.description = descript2.getString();
-			task.fulfilment = gauge.getValue();
-			jxa.pubsubPublish(pubsubNode, task.id, task);
-			// TODO: printTasks(true,true); 
 			display.setCurrent(taskList);
 		}
 	}
@@ -716,8 +721,8 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 
 	public void onContactEvent(final String jid, final String name,
 			final String group, final String subscription) {
-		System.out.println("Contact event " + jid + "  " + name + 
-				"  " + group + "  " + subscription);
+		System.out.println("Contact event " + jid + "  " + name + "  " + group
+				+ "  " + subscription);
 		if (subscription.equals("both")) {
 			boolean found = false;
 			int index = -1;
@@ -733,7 +738,7 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 				contact.jid = jid;
 				contact.name = name;
 				contact.group = group;
-				contacts.setElementAt(contact, index);				
+				contacts.setElementAt(contact, index);
 			} else {
 				Contact contact = new Contact();
 				contact.jid = jid;
@@ -765,19 +770,20 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 	}
 
 	public void onMessageEvent(String from, String body) {
-		Alert alert = new Alert("Сообщение от " + from, body, null, AlertType.INFO);
+		Alert alert = new Alert("Сообщение от " + from, body, null,
+				AlertType.INFO);
 		alert.setTimeout(Alert.FOREVER);
 		Display.getDisplay(this).setCurrent(alert);
 	}
-	
+
 	public void onStatusEvent(String jid, String show, String status) {
 		System.out.println("Status of  " + jid);
 		System.out.println("Status:  " + status);
 		int i = jid.indexOf('/');
 		String bareJid = jid.substring(0, i);
-		for (int j = 0; j < contacts.size(); j++){
+		for (int j = 0; j < contacts.size(); j++) {
 			Contact contact = (Contact) contacts.elementAt(j);
-			if (bareJid.equals(contact.jid)){
+			if (bareJid.equals(contact.jid)) {
 				System.out.println("found");
 				if (show.equals("na")) {
 					contact.online = false;
@@ -798,11 +804,11 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 		System.out.println("Unsubscribe from " + jid);
 		jxa.unsubscribe(jid);
 	}
-	
+
 	public void onTaskEvent(Task task) {
 		int index = -1;
 		for (int i = 0; i < tasks.size(); i++) {
-			if (task.id == ((Task) tasks.elementAt(i)).id) {
+			if (task.id.equals(((Task) tasks.elementAt(i)).id)) {
 				index = i;
 			}
 		}
@@ -811,54 +817,55 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 		} else {
 			tasks.setElementAt(task, index);
 		}
-		printTasks(true,true);
+		printTasks(true, true);
 	}
 
 	public void onCommentEvent(Comment comment) {
 		int index = -1;
 		for (int i = 0; i < comments.size(); i++) {
-			System.out.println("comm id: " + ((Comment) comments.elementAt(i)).id);
-			if (comment.id == ((Comment) comments.elementAt(i)).id) {
+			if (comment.id.equals(((Comment) comments.elementAt(i)).id)) {
 				index = i;
 			}
 		}
 		if (index == -1) {
-			System.out.println("new comment");
 			comments.addElement(comment);
 		} else {
-			System.out.println("update comment");
 			comments.setElementAt(comment, index);
 		}
 		printComments();
 	}
 
 	public void onItemDelete(String id) {
-		
+
 	}
-	
+
 	public void onEvent(Packet packet) {
 		if (packet.equals("subscription", null)) {
 			PubsubSubscription subscription = (PubsubSubscription) packet;
-			if (subscription.jid.equals(jxa.myjid) && subscription.node.equals(pubsubNode) && subid == null) {
+			if (subscription.jid.equals(jxa.myjid)
+					&& subscription.node.equals(pubsubNode) && subid == null) {
 				subid = subscription.subid;
 				jxa.pubsubAllItems(pubsubNode, subid);
 			}
 		} else if (packet.equals("item", null)) {
 			PubsubItem item = (PubsubItem) packet;
+			System.out.println("Found " + item.getProperty("id"));
 			for (Enumeration e = item.getPackets(); e.hasMoreElements();) {
 				Packet found = (Packet) e.nextElement();
 				if (found.equals("task", "http://jabber.org/protocol/task")) {
 					Task task = (Task) found;
 					task.id = item.id;
 					onTaskEvent(task);
-				} else if (found.equals("comment", "http://jabber.org/protocol/task")) {
+				} else if (found.equals("comment",
+						"http://jabber.org/protocol/task")) {
 					Comment comment = (Comment) found;
-					comment.id = comment.id;
+					comment.id = item.id;
 					onCommentEvent(comment);
 				}
 			}
 		} else if (packet.equals("retract", null)) {
 			PubsubRetract retract = (PubsubRetract) packet;
+			System.out.println("Retract " + retract.id);
 			onItemDelete(retract.id);
 		}
 	}

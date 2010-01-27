@@ -12,7 +12,7 @@ public class IQProvider extends Provider {
 	private static final Provider bindProvider = new BindProvider();
 	
 	public IQProvider() {
-		super(IQ.ELEMENT_NAME, IQ.NAMESPACE, false);
+		super(IQ.ELEMENT_NAME, IQ.NAMESPACE, true);
 	}
 
 	protected Packet createPacket() {

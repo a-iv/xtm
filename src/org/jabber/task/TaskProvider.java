@@ -13,7 +13,7 @@ public class TaskProvider extends Provider {
 	 * Создание поставщика задач с указанием используемого имени элемента и пространства имен
 	 */
 	public TaskProvider() {
-		super("task", "http://jabber.org/protocol/task", true);
+		super("task", "http://jabber.org/protocol/task", false);
 	}
 
 	/**
