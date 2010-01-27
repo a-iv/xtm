@@ -92,7 +92,8 @@ public class XmlWriter {
 			writer.write('>');
 			this.inside_tag = false;
 		}
-		this.writeEscaped(this.encodeUTF(str));
+		//this.writeEscaped(this.encodeUTF(str));
+		this.writeEscaped(str);
 	}
 
 	private void writeEscaped(final String str) throws IOException {
