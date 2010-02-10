@@ -22,10 +22,11 @@ import net.sourceforge.jxa.packet.pubsub.PubsubItem;
 import net.sourceforge.jxa.packet.pubsub.PubsubRetract;
 import net.sourceforge.jxa.packet.pubsub.PubsubSubscription;
 
+/**
+ * Пример реализации мидлета для тестирования разработанного стантарда для XMPP
+ */
 public class SampleMIDlet extends MIDlet implements CommandListener,
 		XmppListener {
-	int k = 0;
-
 	String recordStoreName = "user2";
 	String pubsubNode = "sample";
 	Display display;
@@ -139,56 +140,34 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 		}
 	}
 
-	void onDeleteTask() {
-		String id = ((String) printedTaskIDs.elementAt(taskList
-				.getSelectedIndex()));
-		int index = 0;
-		for (int i = 0; i < tasks.size(); i = i + 1) {
-			Task task = (Task) tasks.elementAt(i);
-			if (task.id.equals(id)) {
-				index = i;
-			}
-		}
-		tasks.removeElementAt(index);
-		printTasks(true, true);
-	}
-
-	void deleteTask(String id) {
-		int k = 0;
-		for (int i = 0; i < tasks.size(); i++) {
-			Task task = (Task) tasks.elementAt(i);
-			if (id.equals(task.id)) {
-				k = i;
-			}
-		}
-		tasks.removeElementAt(k);
-		printTasks(true, true);
-	}
-	
 	void updateTask(Task task) {
+		System.out.println("Update: " + task.id);
 		for (int i = 0; tasks.size() > i; i++) {
 			if (task.id.equals(((Task) tasks.elementAt(i)).id)) {
 				String prevId = task.id;
 				task.id = jxa.getRandomID();
 				tasks.setElementAt(task, i);
-				jxa.pubsubRetract(pubsubNode, prevId);
-				jxa.pubsubPublish(pubsubNode, task.id, task);
-				printTasks(true, true);
 				for (int j = 0; comments.size() > j; j++) {
-					if (task.id.equals(((Comment) comments.elementAt(j)).task)) {
-						updateComment((Comment) comments.elementAt(j));
+					if (prevId.equals(((Comment) comments.elementAt(j)).task)) {
+						Comment comment = (Comment) comments.elementAt(j);
+						comment.task = task.id;
+						updateComment(comment);
 					}
 				}
+				printTasks(true, true);
+				jxa.pubsubRetract(pubsubNode, prevId);
+				jxa.pubsubPublish(pubsubNode, task.id, task);
 			}
 		}
 	}
 
 	void updateComment(Comment comment) {
+		System.out.println("Update-c: " + comment.id + " " + comment.task);
 		for (int i = 0; comments.size() > i; i++) {
 			if (comment.id.equals(((Comment) comments.elementAt(i)).id)) {
 				String prevId = comment.id;
 				comment.id = jxa.getRandomID();
-				tasks.setElementAt(comment, i);
+				comments.setElementAt(comment, i);
 				jxa.pubsubRetract(pubsubNode, prevId);
 				jxa.pubsubPublish(pubsubNode, comment.id, comment);
 				printComments();
@@ -299,7 +278,7 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 		formContacts.addCommand(newc);
 		formContacts.addCommand(info);
 		formContacts.addCommand(deletec);
-		formContacts.addCommand(affiliation);
+		//formContacts.addCommand(affiliation);
 		
 		formContacts.addCommand(open);
 		printContacts();
@@ -621,32 +600,37 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 		}
 	}
 
+	/**
+	 * Обработка команд пользователя
+	 */
 	public void thisTaskAction(Command c, Displayable d) {
 		if (c == back) {
-			int i;
-			for (i = 0; i < tasks.size(); i = i + 1) {
-				Task task = (Task) tasks.elementAt(i);
-				if (task.id.equals(thisTaskID)) {
-					task.fulfilment = gauge.getValue();
-				}
-			}
-			display.setCurrent(taskList);
 			printTasks(true, true);
+			display.setCurrent(taskList);
 		} else if (c == message) {
-			display.setCurrent(messagedisplay);
 			messagedisplay.setString("");
+			display.setCurrent(messagedisplay);
 		} else if (c == fulfil) {
 			gauge.setValue(10);
+		// Если была выполнена команда обновления задачи
 		} else if (c == update) {
+			// Производим поиск выбранной задачи
 			for (int i = 0; tasks.size() > i; i++) {
 				if (thisTaskID.equals(((Task) tasks.elementAt(i)).id)) {
 					Task task = (Task) tasks.elementAt(i);
+					// Создаём новую задачу
 					Task update = new Task();
+					// Переносим данные в новую задачу
 					update.id = task.id;
+					update.owner = task.owner;
+					update.sender = task.sender;
 					update.theme = topic2.getString();
 					update.description = descript2.getString();
 					update.fulfilment = gauge.getValue();
+					// Публикуем изменённые данные в pubsub node'у с указанным идентификатором 
+					jxa.pubsubPublish(pubsubNode, update.id, update);
 					updateTask(update);
+					// Изменения будут применены после подтверждения со стороны сервера
 				}
 			}
 			display.setCurrent(taskList);
@@ -835,18 +819,28 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 		jxa.unsubscribe(jid);
 	}
 
+	/**
+	 * Обработка полученного задания
+	 * 
+	 * @param task - объект с задачей
+	 */
 	public void onTaskEvent(Task task) {
 		int index = -1;
+		// Производим поиск задачи среди имеющихся
 		for (int i = 0; i < tasks.size(); i++) {
 			if (task.id.equals(((Task) tasks.elementAt(i)).id)) {
 				index = i;
 			}
 		}
+		// Если задача не найдена
 		if (index == -1) {
+			// Добавляем новую
 			tasks.addElement(task);
 		} else {
+			// Изменяем имеющуюся
 			tasks.setElementAt(task, index);
 		}
+		// Перерисовываем список контактов
 		printTasks(true, true);
 	}
 
@@ -865,37 +859,79 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 		printComments();
 	}
 
+	/**
+	 * Удаление объекта по его уникальному идентификатору
+	 * 
+	 * @param id - идентификатор объекта
+	 */
 	public void onItemDelete(String id) {
-
+		// Поиск задачи с указанным идентификатором
+		for (int i = 0; i < tasks.size(); i++){
+			if (id.equals(((Task) tasks.elementAt(i)).id)){
+				if (thisTaskID.equals(id)) {
+					display.setCurrent(taskList);
+				}
+				// Удаляем задачу
+				tasks.removeElementAt(i);
+				// Обновляем список задач
+				printTasks(true, true);
+			} 
+		}
+		// Поиск комментария с указанным идентификатором
+		for (int i = 0; i < comments.size(); i++){
+			if (id.equals(((Comment) comments.elementAt(i)).id)){
+				// Удаляем комментарий
+				comments.removeElementAt(i);
+				// Обновляем список комментариев
+				printComments();
+			}
+		}
 	}
-
+	
+	/**
+	 * Функция, вызываемая при обнаружении пакета
+	 */
 	public void onEvent(Packet packet) {
+		// если пакет является информацией о подписке
 		if (packet.equals("subscription", null)) {
+			// преобразуем абстрактный пакет в пакет подписки
 			PubsubSubscription subscription = (PubsubSubscription) packet;
+			// если идентифокатор подписки соответствует идентификатору пользователя 
+			// и идентификатор pubsub node'ы соответствует текущей
 			if (subscription.jid.equals(jxa.myjid)
 					&& subscription.node.equals(pubsubNode) && subid == null) {
 				subid = subscription.subid;
+				// запрашиваем все элементы, находящиеся в node'е для указанной подписки
 				jxa.pubsubAllItems(pubsubNode, subid);
 			}
+		// если пакет является информацией о задаче или комментарии
 		} else if (packet.equals("item", null)) {
+			// преобразуем абстрактный пакет в пакет с элементом публикации
 			PubsubItem item = (PubsubItem) packet;
-			System.out.println("Found " + item.getProperty("id"));
+			System.out.println("Found: " + item.id);
+			// обработка вложенных пакетов
 			for (Enumeration e = item.getPackets(); e.hasMoreElements();) {
 				Packet found = (Packet) e.nextElement();
+				// если вложенный пакет является информацией о задаче
 				if (found.equals("task", "http://jabber.org/protocol/task")) {
 					Task task = (Task) found;
 					task.id = item.id;
+					// вызываем обновление данных о задаче
 					onTaskEvent(task);
+				// если вложенный пакет является информацией о комментарии
 				} else if (found.equals("comment",
 						"http://jabber.org/protocol/task")) {
 					Comment comment = (Comment) found;
 					comment.id = item.id;
+					// вызываем обновление данных по комментариям
 					onCommentEvent(comment);
 				}
 			}
+		// если пакет является информацией об удалении задачи или комментария
 		} else if (packet.equals("retract", null)) {
+			// преобразуем в пакет удаления элемента
 			PubsubRetract retract = (PubsubRetract) packet;
-			System.out.println("Retract " + retract.id);
+			// вызываем удаление данного элемента
 			onItemDelete(retract.id);
 		}
 	}

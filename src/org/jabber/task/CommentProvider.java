@@ -18,8 +18,6 @@ public class CommentProvider extends Provider {
 		Comment comment = (Comment) packet;
 		for (Enumeration e = packet.getPackets(); e.hasMoreElements();) {
 			Packet found = (Packet) e.nextElement();
-			if (found.getElementName().equals("id"))
-				comment.id = found.getPayload();
 			if (found.getElementName().equals("sender"))
 				comment.sender = found.getPayload();
 			if (found.getElementName().equals("task"))

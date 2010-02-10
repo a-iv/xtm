@@ -31,8 +31,6 @@ public class Comment extends Packet {
 			addPacket(new Packet("text", null, text));
 		if (sender != null)
 			addPacket(new Packet("sender", null, sender));
-		if (id != null)
-			addPacket(new Packet("description", null, id));
 		super.emit(manager);
 	}
 }

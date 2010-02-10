@@ -38,7 +38,6 @@ public class Task extends Packet {
 			addPacket(new Packet("theme", null, theme));
 		if (description != null)
 			addPacket(new Packet("description", null, description));
-		addPacket(new Packet("id", null, String.valueOf(id)));
 		addPacket(new Packet("fulfilment", null, String.valueOf(fulfilment)));
 		// Вызов функции родительского класса для отправки произвольного xml-пакета
 		super.emit(manager);

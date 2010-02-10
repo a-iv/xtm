@@ -42,6 +42,8 @@ public class TaskProvider extends Provider {
 				task.theme = found.getPayload();
 			if (found.getElementName().equals("description"))
 				task.description = found.getPayload();
+			if (found.getElementName().equals("fulfilment"))
+				task.fulfilment = Integer.valueOf(found.getPayload()).intValue();
 		}
 		return task;
 	}
