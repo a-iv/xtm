@@ -31,7 +31,7 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 	String pubsubNode = "sample";
 	Display display;
 	Form login = new Form("Введите пароль");
-	List main;
+//	List main;
 	List taskList = new List("", Choice.IMPLICIT);
 	List formContacts;
 	Form contactinfo = new Form("инфо о контакте");
@@ -85,7 +85,7 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 	Command message = new Command("Комментировать", Command.ITEM, 5);
 	Command deleteThisTask = new Command("Удалить задание", Command.ITEM, 5);
 	Command fulfil = new Command("Отметить как выполненное", Command.ITEM, 5);
-	Command cSort = new Command("Сортировка", Command.ITEM, 5);
+	Command cSort = new Command("Фильтрация", Command.ITEM, 5);
 	Command save = new Command("Сохранить", Command.ITEM, 5);
 	Command update = new Command("Обновить", Command.ITEM, 5);
 	String State;
@@ -246,14 +246,14 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 		login.append(pass);
 		// TODO: login.append(serv);
 
-		// главное меню
-		main = new List("Главное меню", Choice.IMPLICIT);
-		main.append("контакты", null);
-		// TODO: main.append("учетная запись", null);
-		main.append("выход", null);
-		main.setCommandListener(this);
-		main.addCommand(exit);
-		main.addCommand(select);
+//		// главное меню
+//		main = new List("Главное меню", Choice.IMPLICIT);
+//		main.append("контакты", null);
+//		// TODO: main.append("учетная запись", null);
+//		main.append("выход", null);
+//		main.setCommandListener(this);
+//		main.addCommand(exit);
+//		main.addCommand(select);
 
 		// форма чат
 		taskList.setCommandListener(this);
@@ -273,7 +273,7 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 		// форма контакты
 		formContacts = new List("Контакты", Choice.IMPLICIT);
 		formContacts.setCommandListener(this);
-		formContacts.addCommand(back);
+		formContacts.addCommand(exit);
 		formContacts.addCommand(newTask);
 		formContacts.addCommand(newc);
 		formContacts.addCommand(info);
@@ -428,29 +428,29 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 	}
 
 	public void mainAction(Command c, Displayable d) {
-		if (c == exit) {
-			destroyApp(true);
-		} else {
-			switch (main.getSelectedIndex()) {
-			case 0:
-				printContacts();
-				display.setCurrent(formContacts);
-				break;
-			case 1:
-				destroyApp(true);
-				break;
-			// TODO:
-			case 2:
-				display.setCurrent(ychet);
-				break;
-			case 3:
-				jxa.pubsubCreateNode(pubsubNode);
-				break;
-			case 4:
-				jxa.pubsubSubscribe(pubsubNode);
-				break;
-			}
-		}
+//		if (c == exit) {
+//			destroyApp(true);
+//		} else {
+//			switch (main.getSelectedIndex()) {
+//			case 0:
+//				printContacts();
+//				display.setCurrent(formContacts);
+//				break;
+//			case 1:
+//				destroyApp(true);
+//				break;
+//			// TODO:
+//			case 2:
+//				display.setCurrent(ychet);
+//				break;
+//			case 3:
+//				jxa.pubsubCreateNode(pubsubNode);
+//				break;
+//			case 4:
+//				jxa.pubsubSubscribe(pubsubNode);
+//				break;
+//			}
+//		}
 	}
 
 	public void taskListAction(Command c, Displayable d) {
@@ -480,8 +480,9 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 	}
 
 	public void formContactsAction(Command c, Displayable d) {
-		if (c == back) {
-			display.setCurrent(main);
+		if (c == exit) {
+			destroyApp(true);
+//			display.setCurrent(main);
 		} else if (c == info) {
 			int a;
 			a = formContacts.getSelectedIndex();
@@ -549,23 +550,23 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 	}
 
 	public void ychetAction(Command c, Displayable d) {
-		if (c == back) {
-			display.setCurrent(main);
-		} else if (c == ok && !name.getString().equals("")) {
-			// String s = name.getString();
-			/*
-			 * byte[] data = s.getBytes(); setRecordText(1,data);
-			 */
-			// String s2 = work.getString();
-			/*
-			 * byte[] data2 = s2.getBytes(); setRecordText(2,data2);/
-			 */
-			// String s3 = password.getString();
-			/*
-			 * byte[] data3 = s3.getBytes(); setRecordText(3, data3);
-			 */
-		}
-		display.setCurrent(main);
+//		if (c == back) {
+//			display.setCurrent(main);
+//		} else if (c == ok && !name.getString().equals("")) {
+//			// String s = name.getString();
+//			/*
+//			 * byte[] data = s.getBytes(); setRecordText(1,data);
+//			 */
+//			// String s2 = work.getString();
+//			/*
+//			 * byte[] data2 = s2.getBytes(); setRecordText(2,data2);/
+//			 */
+//			// String s3 = password.getString();
+//			/*
+//			 * byte[] data3 = s3.getBytes(); setRecordText(3, data3);
+//			 */
+//		}
+//		display.setCurrent(main);
 	}
 
 	public void contactinfoAction(Command c, Displayable d) {
@@ -628,7 +629,7 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 					update.description = descript2.getString();
 					update.fulfilment = gauge.getValue();
 					// Публикуем изменённые данные в pubsub node'у с указанным идентификатором 
-					jxa.pubsubPublish(pubsubNode, update.id, update);
+					//jxa.pubsubPublish(pubsubNode, update.id, update);
 					updateTask(update);
 					// Изменения будут применены после подтверждения со стороны сервера
 				}
@@ -664,9 +665,9 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 		} else if (display.getCurrent() == connection) {
 			// подключение
 			connectionAction(c, d);
-		} else if (display.getCurrent() == main) {
-			// Главная форма
-			mainAction(c, d);
+//		} else if (display.getCurrent() == main) {
+//			// Главная форма
+//			mainAction(c, d);
 		} else if (display.getCurrent() == taskList) {
 			// форма чат
 			taskListAction(c, d);
@@ -722,7 +723,8 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 	public void onAuth(String resource) {
 		jxa.getRoster();
 		jxa.pubsubAllSubscriptions(pubsubNode);
-		display.setCurrent(main);
+		printContacts();
+		display.setCurrent(formContacts);
 	}
 
 	public void onAuthFailed(String message) {
