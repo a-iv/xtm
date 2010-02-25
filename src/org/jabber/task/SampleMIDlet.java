@@ -22,6 +22,10 @@ import net.sourceforge.jxa.packet.pubsub.PubsubItem;
 import net.sourceforge.jxa.packet.pubsub.PubsubRetract;
 import net.sourceforge.jxa.packet.pubsub.PubsubSubscription;
 
+import javax.microedition.media.*;
+import javax.microedition.media.control.*;
+import javax.microedition.midlet.*;
+
 /**
  * Пример реализации мидлета для тестирования разработанного стантарда для XMPP
  */
@@ -47,6 +51,9 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 	Jxa jxa;
 	Image offlineImg;
 	Image onlineImg;
+	
+	Player player;
+		
 
 	TextField pass = new TextField("Введите пароль", "", 20, TextField.PASSWORD);
 	TextField password = new TextField("Пароль", "", 20, TextField.PASSWORD);
@@ -345,7 +352,7 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 		if (getRecordText(1) != null) {
 			userJID.setString(getRecordText(1));
 		} else {
-			userJID.setString("test1@gpsgeotrace.com");
+			userJID.setString("test1@r508-08.hq.redsolution.ru");
 		}
 		if (getRecordText(2) != null) {
 			pass.setString(getRecordText(2));
@@ -355,10 +362,10 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 		if (getRecordText(3) != null) {
 			serv.setString(getRecordText(3));
 		} else {
-			serv.setString("gpsgeotrace.com");
+			serv.setString("r508-08.hq.redsolution.ru");
 		}
 	}
-
+	
 	String getRecordText(int id) {
 		String str = null;
 		try {
@@ -579,6 +586,7 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 			group.addElement(groupp);
 			jxa.saveContact(thisContactJID, name, group.elements(), null);
 			display.setCurrent(formContacts);
+			printContacts();
 		}
 	}
 
@@ -844,6 +852,34 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 		}
 		// Перерисовываем список контактов
 		printTasks(true, true);
+		System.out.println("Start player");
+		
+		if ((player == null)||(player.getState() == Player.PREFETCHED)){
+		try {
+			if (player != null)
+				System.out.println(player.getState());
+			player = Manager.createPlayer(Manager.TONE_DEVICE_LOCATOR);
+			player.realize();
+			ToneControl tc1 = (ToneControl)player.getControl("ToneControl");
+			byte[] Nots={
+					ToneControl.VERSION, 1, //версия используемого атрибута
+					ToneControl.TEMPO, 50, //темп мелодии. Переменная speed = 5-127
+					ToneControl.BLOCK_START, 0, //начало блока 0
+					ToneControl.C4+7, 8,
+					ToneControl.C4+2, 16,
+					ToneControl.BLOCK_END, 0, //конец блока 0
+					ToneControl.PLAY_BLOCK, 0}; //воспроизведение блока 0
+			//Подключаем последовательность нот, указанных в массиве Nots
+			tc1.setSequence(Nots);
+			player.start();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (MediaException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+	}
 	}
 
 	public void onCommentEvent(Comment comment) {
