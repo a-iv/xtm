@@ -151,7 +151,6 @@ public class Jxa extends Manager {
             parser.setInput(new InputStreamReader(is, "UTF-8"));
             */
 		} catch (final Exception e) {
-			java.lang.System.out.println(e);
 			this.connectionFailed(e.toString());
 			return;
 		}
@@ -546,8 +545,14 @@ public class Jxa extends Manager {
 	}
 
 	private void connectionFailed(final String msg) {
-		this.writer.close();
-		this.reader.close();
+		try {
+			this.writer.close();
+		} catch (Exception e) {
+		}
+		try {
+			this.reader.close();
+		} catch (Exception e) {
+		}
 
 		for (Enumeration e = listeners.elements(); e.hasMoreElements();) {
 			XmppListener xl = (XmppListener) e.nextElement();
