@@ -53,8 +53,7 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 	Image onlineImg;
 	
 	Player player;
-		
-
+	
 	TextField pass = new TextField("Введите пароль", "", 20, TextField.PASSWORD);
 	TextField password = new TextField("Пароль", "", 20, TextField.PASSWORD);
 	TextField name = new TextField("Фамилия, Имя", "", 100, 0);
@@ -105,6 +104,7 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 	String thisContactJID = new String();
 	String thisTaskID = new String();
 	String subid = null;
+	int pt = 11;
 
 	void printContacts() {
 		int selectedItem = formContacts.getSelectedIndex();
@@ -161,7 +161,14 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 						updateComment(comment);
 					}
 				}
-				printTasks(true, true);
+				if (pt==11){
+				printTasks(true, true);}
+				if (pt==10){
+					printTasks(true, false);
+				}
+				if (pt==1){
+					printTasks(false, true);
+				}
 				jxa.pubsubRetract(pubsubNode, prevId);
 				jxa.pubsubPublish(pubsubNode, task.id, task);
 			}
@@ -352,7 +359,7 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 		if (getRecordText(1) != null) {
 			userJID.setString(getRecordText(1));
 		} else {
-			userJID.setString("test1@r508-08.hq.redsolution.ru");
+			userJID.setString("test1@gpsgeotrace.com");
 		}
 		if (getRecordText(2) != null) {
 			pass.setString(getRecordText(2));
@@ -362,7 +369,7 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 		if (getRecordText(3) != null) {
 			serv.setString(getRecordText(3));
 		} else {
-			serv.setString("r508-08.hq.redsolution.ru");
+			serv.setString("gpsgeotrace.com");
 		}
 	}
 	
@@ -422,6 +429,8 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 			jxa.addProvider(new TaskProvider());
 			jxa.addProvider(new CommentProvider());
 			jxa.start();
+			
+			
 		} else if (c == exit) {
 			destroyApp(true);
 		}
@@ -454,6 +463,7 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 //				jxa.pubsubCreateNode(pubsubNode);
 //				break;
 //			case 4:
+//				jxa.pubsubCreateNode(pubsubNode);
 //				jxa.pubsubSubscribe(pubsubNode);
 //				break;
 //			}
@@ -472,6 +482,7 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 		} else if (c == newTask) {
 			display.setCurrent(formTask);
 			topic.setString("");
+			descript.setString("");
 		} else if (c == cSort) {
 			display.setCurrent(sort);
 		} else {
@@ -504,7 +515,14 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 			String contname = formContacts.getString(formContacts
 					.getSelectedIndex());
 			taskList.setTitle(contname);
-			printTasks(true, true);
+			if (pt==11){
+				printTasks(true, true);}
+				if (pt==10){
+					printTasks(true, false);
+				}
+				if (pt==1){
+					printTasks(false, true);
+				}
 			display.setCurrent(taskList);
 		} else if (c == newc) {
 			newContactJID.setString("");
@@ -526,7 +544,14 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 			String contname = formContacts.getString(formContacts
 					.getSelectedIndex());
 			taskList.setTitle(contname);
-			printTasks(true, true);
+			if (pt==11){
+				printTasks(true, true);}
+				if (pt==10){
+					printTasks(true, false);
+				}
+				if (pt==1){
+					printTasks(false, true);
+				}
 			display.setCurrent(taskList);
 		}
 	}
@@ -614,7 +639,14 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 	 */
 	public void thisTaskAction(Command c, Displayable d) {
 		if (c == back) {
-			printTasks(true, true);
+			if (pt==11){
+				printTasks(true, true);}
+				if (pt==10){
+					printTasks(true, false);
+				}
+				if (pt==1){
+					printTasks(false, true);
+				}
 			display.setCurrent(taskList);
 		} else if (c == message) {
 			messagedisplay.setString("");
@@ -654,14 +686,17 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 			case 0:
 				display.setCurrent(taskList);
 				printTasks(true, false);
+				pt = 10;
 				break;
 			case 1:
 				display.setCurrent(taskList);
 				printTasks(false, true);
+				pt = 1;
 				break;
 			case 2:
 				display.setCurrent(taskList);
 				printTasks(true, true);
+				pt = 11;
 				break;
 			}
 		}
@@ -732,15 +767,32 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 		jxa.getRoster();
 		jxa.pubsubAllSubscriptions(pubsubNode);
 		printContacts();
+		
+		//jxa.pubsubCreateNode(pubsubNode);
+		//jxa.pubsubSubscribe(pubsubNode);
+		//jxa.pubsubSetAffiliation(pubsubNode, "test2@gpsgeotrace.com", "owner");
+		//jxa.pubsubSetAffiliation(pubsubNode, "test3@gpsgeotrace.com", "owner");
+		//jxa.pubsubSetAffiliation(pubsubNode, "test4@gpsgeotrace.com", "owner");
+		
 		display.setCurrent(formContacts);
 	}
 
 	public void onAuthFailed(String message) {
 		System.out.println("Auth failed");
+		display.setCurrent(login);
+		Alert alert = new Alert("Ошибка авторизации", "проверьте настройки подключения и " +
+				"правильность ввода логина и пароля.", null,
+				AlertType.ERROR);
+		alert.setTimeout(Alert.FOREVER);
+		Display.getDisplay(this).setCurrent(alert);
 	}
 
 	public void onConnFailed(String msg) {
 		System.out.println("Connection failed");
+		Alert alert = new Alert("Ошибка подключения", "проверьте настройки подключения к сети Интернет", null,
+				AlertType.ERROR);
+		alert.setTimeout(Alert.FOREVER);
+		Display.getDisplay(this).setCurrent(alert);
 	}
 
 	public void onContactEvent(final String jid, final String name,
@@ -851,7 +903,14 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 			tasks.setElementAt(task, index);
 		}
 		// Перерисовываем список контактов
-		printTasks(true, true);
+		if (pt==11){
+			printTasks(true, true);}
+			if (pt==10){
+				printTasks(true, false);
+			}
+			if (pt==1){
+				printTasks(false, true);
+			}
 		System.out.println("Start player");
 		
 		if ((player == null)||(player.getState() == Player.PREFETCHED)){
@@ -912,7 +971,14 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 				// Удаляем задачу
 				tasks.removeElementAt(i);
 				// Обновляем список задач
-				printTasks(true, true);
+				if (pt==11){
+					printTasks(true, true);}
+					if (pt==10){
+						printTasks(true, false);
+					}
+					if (pt==1){
+						printTasks(false, true);
+					}
 			} 
 		}
 		// Поиск комментария с указанным идентификатором
