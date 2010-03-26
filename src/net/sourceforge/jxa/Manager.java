@@ -75,7 +75,6 @@ public class Manager extends Thread {
 	public Packet parse(Enumeration providers, boolean skipUnknown) throws IOException {
 		String elementName = reader.getName();
 		String namespace = reader.getAttribute("xmlns");
-		System.out.println(elementName + ":" + namespace);
 		for (; providers.hasMoreElements();) {
 			Provider provider = (Provider) providers.nextElement();
 			if (provider.equals(elementName, namespace)) {

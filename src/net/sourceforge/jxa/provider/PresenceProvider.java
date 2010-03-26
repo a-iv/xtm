@@ -20,7 +20,6 @@ public class PresenceProvider extends Provider {
 		presence.type = packet.getProperty("type");
 		for (Enumeration e = packet.getPackets(); e.hasMoreElements();) {
 			Packet found = (Packet) e.nextElement();
-			System.out.println(found.getElementName());
 			if (found.equals("show", null)) 
 				presence.show = found.getPayload();
 			if (found.equals("status", null))

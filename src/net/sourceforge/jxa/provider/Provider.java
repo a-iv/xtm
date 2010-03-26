@@ -107,6 +107,7 @@ public class Provider {
 		packet = parseComplited(packet);
 		if (makeEvent)
 			manager.event(packet);
+		packet.log(false);
 		return packet;
 	}
 }

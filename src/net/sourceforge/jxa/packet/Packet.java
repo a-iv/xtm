@@ -192,6 +192,22 @@ public class Packet {
 	}
 	
 	/**
+	 * Get inner packet
+	 * 
+	 * @param elementName
+	 * @param namespace
+	 */
+	public Packet getPacket(String elementName, String namespace) {
+		for (int index = 0; index < packets.size(); index++) {
+			Packet found = (Packet) packets.elementAt(index);
+			if (found.equals(elementName, namespace)) {
+				return found;
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * Remove inner packet
 	 * 
 	 * @param elementName
@@ -216,6 +232,32 @@ public class Packet {
 		packets.removeAllElements();
 	}
 	
+	public String log(boolean out) {
+		String result = new String();
+		result += "<" + getElementName();
+		for (Enumeration e = getProperties(); e.hasMoreElements();) {
+			String name = (String) e.nextElement();
+			result += " " + name + "='" + getProperty(name) + "'";
+		}
+		result += ">";
+		if (payload != null) {
+			result += payload;
+		}
+		for (Enumeration e = getPackets(); e.hasMoreElements();) {
+			Packet packet = (Packet) e.nextElement();
+			result += packet.log(out);
+		}
+		result += "</" + getElementName() + ">";
+		if (getElementName().equals("iq") || getElementName().equals("presence") || getElementName().equals("message")) {
+			if (out)
+				result = "> " + result;
+			else
+				result = "< " + result;
+			System.out.println(result);
+		}
+		return result;
+	}
+	
 	/**
 	 * Publish this packet to manager`s writer
 	 * 
@@ -236,5 +278,6 @@ public class Packet {
 			packet.emit(manager);
 		}
 		manager.writer.endTag();
+		log(true);
 	}
 }

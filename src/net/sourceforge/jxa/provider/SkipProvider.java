@@ -16,7 +16,6 @@ public class SkipProvider extends Provider {
 	}
 
 	public Packet parse(Manager manager) throws IOException {
-		System.out.println("Skip: " + manager.reader.getName());
 		while (true) {
 			int type = manager.reader.next();
 			if (type == XmlReader.END_TAG || type == XmlReader.END_DOCUMENT)
