@@ -60,6 +60,7 @@ public class Jxa extends Manager {
 	final static boolean DEBUG = true;
 
 	public final String host, port, username, password, myjid, server, pubsubServer;
+	public boolean create;
 	private final boolean use_ssl;
 	private String resource;
 	private final int priority;
@@ -182,6 +183,21 @@ public class Jxa extends Manager {
 			this.connectionFailed(e.toString());
 		}
 	}
+	
+	public Packet waitPacket(String id) {
+		try {
+			Packet packet;
+			while (this.reader.next() == XmlReader.START_TAG) {
+				packet = parse(true);
+				if (packet.getProperty("id").equals(id))
+					return packet;
+			}
+			reader.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
 
 	/**
 	 * Opens the connection with a stream-tag, queries authentication type and
@@ -203,7 +219,42 @@ public class Jxa extends Manager {
 		} while ((reader.getType() != XmlReader.END_TAG)
 				|| (!reader.getName().equals("stream:features")));
 
-		System.out.println("SASL phase1");
+		if (create) {
+			System.out.println("Create");
+			
+			IQ result;
+			Packet query;
+			
+			query = new Packet("query", "jabber:iq:register");
+			sendPacket(new IQ("get", null, "reg1", query));
+			
+			result = (IQ) waitPacket("reg1");
+			query = result.getPacket("query", "jabber:iq:register");
+			if (query == null) {
+				query = new Packet("query", "jabber:iq:register");
+				query.addPacket(new Packet("username", null));
+				query.addPacket(new Packet("password", null));
+			}
+			query.removePacket("instructions", null);
+			query.removePacket("x", "jabber:x:data");
+			
+			for (Enumeration e = query.getPackets(); e.hasMoreElements();) {
+				Packet packet = (Packet) e.nextElement();
+				if (packet.getElementName().equals("username")) {
+					packet.setPayload(username);
+				} else if (packet.getElementName().equals("password")) {
+					packet.setPayload(password);
+				} else if (packet.getElementName().equals("email")) {
+					packet.setPayload(username + "@" + host);
+				}
+			}
+
+			sendPacket(new IQ("set", null, "reg2", query));
+
+			result = (IQ) waitPacket("reg2");
+		}
+		
+		System.out.println("SASL phase1");		
 		
 		Packet auth = new Packet("auth", "urn:ietf:params:xml:ns:xmpp-sasl");
 		auth.setProperty("mechanism", "PLAIN");
@@ -574,7 +625,7 @@ public class Jxa extends Manager {
 				}
 			} else if (packet.equals("iq", null)) {
 				IQ iq = (IQ) packet;
-				System.out.println(iq.type + " from " + iq.from + " to " + iq.to + " : " + iq.id);
+				System.out.println("IQ: " + iq.type + " from " + iq.from + " to " + iq.to + " : " + iq.id);
 				for (Enumeration packets = iq.getPackets(); packets.hasMoreElements();) {
 					System.out.println("With: " + packets.nextElement());
 				}
@@ -600,7 +651,7 @@ public class Jxa extends Manager {
 				Presence presence = (Presence) packet;
 				if (presence.type == null) {
 					xl.onStatusEvent(presence.from, presence.show, presence.status);
-				} else if (presence.type.equals("unsubscribed") || presence.type.equals("error")) {
+				} else if (presence.type.equals("unsubscribe") || presence.type.equals("error")) {
 					xl.onUnsubscribeEvent(presence.from);
 				} else if (presence.type.equals("subscribe")) {
 					xl.onSubscribeEvent(presence.from);
