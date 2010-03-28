@@ -97,7 +97,7 @@ public class Jxa extends Manager {
 	// to login Google Talk, set port to 5223 (NOT 5222 in their offical guide)
 	public Jxa(final String jid, final String password, final String resource,
 			final int priority, final String server, final String port,
-			final boolean use_ssl, final String pubsubServer) {
+			final boolean use_ssl, final String pubsubServer, boolean create) {
 		int i = jid.indexOf('@');
 		this.host = jid.substring(i + 1);
 		this.port = port;
@@ -112,6 +112,7 @@ public class Jxa extends Manager {
 			this.server = server;
 		this.use_ssl = use_ssl;
 		this.pubsubServer = pubsubServer;
+		this.create = create;
 		addProvider(new MessageProvider());
 		addProvider(new IQProvider());
 		addProvider(new PresenceProvider());

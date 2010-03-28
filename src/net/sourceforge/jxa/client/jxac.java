@@ -149,12 +149,13 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 	public void onSubscribeEvent(final String jid) {
 		System.out.println("Subscribe from " + jid);
 		jxa.subscribed(jid);
-		//jxa.saveContact(jid, null, null, "subscribe");
+		jxa.subscribe(jid);
 	}
 
 	public void onUnsubscribeEvent(final String jid) {
 		System.out.println("Unsubscribe from " + jid);
 		jxa.unsubscribed(jid);
+		jxa.unsubscribe(jid);
 	}
 	
 	public void commandAction(final Command cmd, final Displayable displayable) {
@@ -163,7 +164,7 @@ public class jxac extends MIDlet implements CommandListener, XmppListener {
 			String passwd = passwd_field.getString();
 			String server = server_field.getString();
 			Display.getDisplay(this).setCurrent(contacts_list);
-			jxa = new Jxa(id, passwd, "jxac", 10, server, "5222", false, pubsubServer);
+			jxa = new Jxa(id, passwd, "jxac", 10, server, "5222", false, pubsubServer, true);
 			jxa.addListener(this);
 			jxa.addProvider(taskProvider);
 			jxa.start();
