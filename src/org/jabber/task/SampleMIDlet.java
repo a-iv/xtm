@@ -74,6 +74,7 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 
 	Gauge gauge = new Gauge("Выполнено", true, 10, 0);
 
+	Command create = new Command("Создать", Command.ITEM, 0);
 	Command select = new Command("Выбрать", Command.ITEM, 0);
 	Command back = new Command("Назад", Command.BACK, 1);
 	Command exit = new Command("Выход", Command.EXIT, 2);
@@ -176,7 +177,6 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 	}
 
 	void updateComment(Comment comment) {
-		System.out.println("Update-c: " + comment.id + " " + comment.task);
 		for (int i = 0; comments.size() > i; i++) {
 			if (comment.id.equals(((Comment) comments.elementAt(i)).id)) {
 				String prevId = comment.id;
@@ -255,6 +255,7 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 		// экран ввода пароля
 		login.addCommand(exit);
 		login.addCommand(select);
+		login.addCommand(create);
 		login.setCommandListener(this);
 		login.append(userJID);
 		login.append(pass);
@@ -359,7 +360,7 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 		if (getRecordText(1) != null) {
 			userJID.setString(getRecordText(1));
 		} else {
-			userJID.setString("test1@gpsgeotrace.com");
+			userJID.setString("test1@xmpptask.ru");
 		}
 		if (getRecordText(2) != null) {
 			pass.setString(getRecordText(2));
@@ -369,7 +370,7 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 		if (getRecordText(3) != null) {
 			serv.setString(getRecordText(3));
 		} else {
-			serv.setString("gpsgeotrace.com");
+			serv.setString("xmpptask.ru");
 		}
 	}
 	
@@ -424,13 +425,24 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 			display.setCurrent(connection);
 			// display.setCurrent(main);
 			jxa = new Jxa(thisUserJID, pass.getString(), "mobile", 10, serv
-					.getString(), "5222", false, "pubsub." + serv.getString());
+					.getString(), "5222", false, "pubsub." + serv.getString(), false);
 			jxa.addListener(this);
 			jxa.addProvider(new TaskProvider());
 			jxa.addProvider(new CommentProvider());
 			jxa.start();
-			
-			
+		} else if (c == create) {
+			thisUserJID = userJID.getString();
+			setRecordText(1, userJID.getString().getBytes());
+			setRecordText(2, pass.getString().getBytes());
+			setRecordText(3, serv.getString().getBytes());
+			display.setCurrent(connection);
+			// display.setCurrent(main);
+			jxa = new Jxa(thisUserJID, pass.getString(), "mobile", 10, serv
+					.getString(), "5222", false, "pubsub." + serv.getString(), true);
+			jxa.addListener(this);
+			jxa.addProvider(new TaskProvider());
+			jxa.addProvider(new CommentProvider());
+			jxa.start();
 		} else if (c == exit) {
 			destroyApp(true);
 		}
@@ -575,7 +587,6 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 			comment.task = thisTaskID;
 			comment.sender = thisUserJID;
 			comment.text = messagedisplay.getString();
-			System.out.println("Comment: " + comment.id);
 			jxa.pubsubPublish(pubsubNode, comment.id, comment);
 			display.setCurrent(thisTask);
 		}
@@ -628,7 +639,6 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 			task.owner = thisContactJID;
 			task.sender = thisUserJID;
 			task.theme = strTopic;
-			System.out.println("Create " + task.id);
 			jxa.pubsubPublish(pubsubNode, task.id, task);
 			display.setCurrent(taskList);
 		}
@@ -778,7 +788,6 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 	}
 
 	public void onAuthFailed(String message) {
-		System.out.println("Auth failed");
 		display.setCurrent(login);
 		Alert alert = new Alert("Ошибка авторизации", "проверьте настройки подключения и " +
 				"правильность ввода логина и пароля.", null,
@@ -788,7 +797,6 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 	}
 
 	public void onConnFailed(String msg) {
-		System.out.println("Connection failed");
 		Alert alert = new Alert("Ошибка подключения", "проверьте настройки подключения к сети Интернет", null,
 				AlertType.ERROR);
 		alert.setTimeout(Alert.FOREVER);
@@ -797,9 +805,9 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 
 	public void onContactEvent(final String jid, final String name,
 			final String group, final String subscription) {
-		System.out.println("Contact event " + jid + "  " + name + "  " + group
-				+ "  " + subscription);
-		if (subscription.equals("both")) {
+		System.out.println("Contact " + jid + "," + name + "," + group
+				+ "," + subscription);
+		if (subscription.equals("both") || subscription.equals("to")) {
 			boolean found = false;
 			int index = -1;
 			for (int i = 0; i < contacts.size(); i++) {
@@ -853,14 +861,11 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 	}
 
 	public void onStatusEvent(String jid, String show, String status) {
-		System.out.println("Status of  " + jid);
-		System.out.println("Status:  " + status);
 		int i = jid.indexOf('/');
 		String bareJid = jid.substring(0, i);
 		for (int j = 0; j < contacts.size(); j++) {
 			Contact contact = (Contact) contacts.elementAt(j);
 			if (bareJid.equals(contact.jid)) {
-				System.out.println("found");
 				if (show.equals("na")) {
 					contact.online = false;
 				} else {
@@ -873,11 +878,13 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 
 	public void onSubscribeEvent(String jid) {
 		System.out.println("Subscribe from " + jid);
+		jxa.subscribed(jid);
 		jxa.subscribe(jid);
 	}
 
 	public void onUnsubscribeEvent(String jid) {
 		System.out.println("Unsubscribe from " + jid);
+		jxa.unsubscribed(jid);
 		jxa.unsubscribe(jid);
 	}
 
@@ -911,12 +918,9 @@ public class SampleMIDlet extends MIDlet implements CommandListener,
 			if (pt==1){
 				printTasks(false, true);
 			}
-		System.out.println("Start player");
 		
 		if ((player == null)||(player.getState() == Player.PREFETCHED)){
 		try {
-			if (player != null)
-				System.out.println(player.getState());
 			player = Manager.createPlayer(Manager.TONE_DEVICE_LOCATOR);
 			player.realize();
 			ToneControl tc1 = (ToneControl)player.getControl("ToneControl");

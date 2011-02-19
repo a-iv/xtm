@@ -18,6 +18,8 @@ package net.sourceforge.jxa;
 import java.io.*;
 import java.util.*;
 
+import net.sourceforge.jxa.packet.Packet;
+
 /**
  * XML-Reader
  * 
@@ -158,7 +160,6 @@ public class XmlReader {
 			this.type = TEXT;
 			this.text = this.readText('<');
 		}
-
 		return this.type;
 	}
 
